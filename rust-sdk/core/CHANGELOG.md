@@ -1,5 +1,17 @@
 # @crypticdot/fusionamm-rust-core
 
+## 1.0.59
+
+### Patch Changes
+
+- 386c7fa: Updated get_order_book_side (min/max price fix)
+
+## 1.0.58
+
+### Patch Changes
+
+- 2a3bb9b: Updated get_order_book_side
+
 ## 1.0.57
 
 ## 1.0.56

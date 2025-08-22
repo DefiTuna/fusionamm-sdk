@@ -1,7 +1,7 @@
 {
   "name": "@crypticdot/fusionamm-integration",
   "private": true,
-  "version": "1.0.55",
+  "version": "1.0.59",
   "type": "module",
   "scripts": {
     "test": "vitest run index.test.ts --test-timeout 60000"

@@ -1,5 +1,38 @@
 # @crypticdot/fusionamm-integration
 
+## 1.0.59
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.59
+- @crypticdot/fusionamm-client@1.0.59
+- @crypticdot/fusionamm-sdk@1.0.59
+
+## 1.0.58
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.58
+- @crypticdot/fusionamm-client@1.0.58
+- @crypticdot/fusionamm-sdk@1.0.58
+
+## 1.0.57
+
+### Patch Changes
+
+- Updated dependencies [01c5a9a]
+  - @crypticdot/fusionamm-sdk@1.0.57
+  - @crypticdot/fusionamm-client@1.0.57
+  - @crypticdot/fusionamm-core@1.0.57
+
+## 1.0.56
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.56
+- @crypticdot/fusionamm-client@1.0.56
+- @crypticdot/fusionamm-sdk@1.0.56
+
 ## 1.0.55
 
 ### Patch Changes

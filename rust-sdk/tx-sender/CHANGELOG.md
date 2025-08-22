@@ -1,5 +1,41 @@
 # @crypticdot/fusionamm-rust-tx-sender
 
+## 1.0.16
+
+### Patch Changes
+
+- d034d76: Adjusted transaction polling
+
+## 1.0.15
+
+### Patch Changes
+
+- 2f2ca29: Imoproved transaction status polling
+
+## 1.0.14
+
+### Patch Changes
+
+- c706ae4: Made members of SmartTxElapsedTime public
+
+## 1.0.13
+
+### Patch Changes
+
+- 388e625: Updated Jito regions
+
+## 1.0.12
+
+### Patch Changes
+
+- 64f8a2f: Added Custom priority fee level
+
+## 1.0.11
+
+### Patch Changes
+
+- ec320f3: Added additional transaction options
+
 ## 1.0.10
 
 ### Patch Changes

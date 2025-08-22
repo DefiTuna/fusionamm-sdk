@@ -80,8 +80,13 @@ pub async fn send_jito_bundle(client: Client, serialized_transactions: Vec<Strin
     Err(anyhow!("Unexpected response format"))
 }
 
-pub async fn poll_jito_bundle_statuses(client: Client, bundle_id: String, jito_api_url: &str, timeout: Duration) -> Result<String> {
-    let interval: Duration = Duration::from_secs(2);
+pub async fn poll_jito_bundle_statuses(
+    client: Client,
+    bundle_id: String,
+    jito_api_url: &str,
+    interval: Duration,
+    timeout: Duration,
+) -> Result<String> {
     let start: tokio::time::Instant = tokio::time::Instant::now();
 
     while start.elapsed() < timeout {
@@ -173,9 +178,12 @@ where
 /// Jito API URLs for different regions
 pub fn get_jito_api_url_by_region(region: &str) -> String {
     match region {
-        "NY" => "https://ny.mainnet.block-engine.jito.wtf".to_string(),
         "Amsterdam" => "https://amsterdam.mainnet.block-engine.jito.wtf".to_string(),
         "Frankfurt" => "https://frankfurt.mainnet.block-engine.jito.wtf".to_string(),
+        "London" => "https://london.mainnet.block-engine.jito.wtf".to_string(),
+        "NY" => "https://ny.mainnet.block-engine.jito.wtf".to_string(),
+        "Singapore" => "https://singapore.mainnet.block-engine.jito.wtf".to_string(),
+        "SLC" => "https://slc.mainnet.block-engine.jito.wtf".to_string(),
         "Tokyo" => "https://tokyo.mainnet.block-engine.jito.wtf".to_string(),
         "Default" => "https://mainnet.block-engine.jito.wtf".to_string(),
         _ => {

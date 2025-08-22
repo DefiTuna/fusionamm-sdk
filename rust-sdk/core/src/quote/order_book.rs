@@ -78,8 +78,8 @@ pub fn get_order_book_side(
     let mut limit_total_quote = 0;
     let mut order_book_entries: Vec<OrderBookEntry> = vec![];
 
-    let min_price = sqrt_price_to_price(MIN_SQRT_PRICE.into(), 1, 1);
-    let max_price = sqrt_price_to_price(MAX_SQRT_PRICE.into(), 1, 1);
+    let min_price = sqrt_price_to_price(MIN_SQRT_PRICE.into(), decimals_a, decimals_b);
+    let max_price = sqrt_price_to_price(MAX_SQRT_PRICE.into(), decimals_a, decimals_b);
 
     loop {
         if current_price == min_price || current_price == max_price || order_book_entries.len() >= max_num_entries as usize {
@@ -123,7 +123,7 @@ pub fn get_order_book_side(
 
             let (next_tick, next_tick_index) = match next_tick_result {
                 Ok(r) => (r.0, r.1),
-                Err(_) => return Ok(order_book_entries),
+                Err(_) => break,
             };
 
             let next_tick_sqrt_price: u128 = tick_index_to_sqrt_price(next_tick_index).into();
@@ -285,9 +285,9 @@ mod order_book_tests {
         tick_arrays[4].ticks[87].initialized = true;
         let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
-        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 100, false, 6, 6).unwrap();
+        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 8, false, 6, 6).unwrap();
 
-        assert_eq!(order_book.len(), 6);
+        assert_eq!(order_book.len(), 8);
 
         let mut price = 1.0;
         let mut concentrated_total = 0;
@@ -311,6 +311,8 @@ mod order_book_tests {
         assert_eq!(order_book[3].concentrated_amount, 29208);
         assert_eq!(order_book[4].concentrated_amount, 0);
         assert_eq!(order_book[5].concentrated_amount, 0);
+        assert_eq!(order_book[6].concentrated_amount, 0);
+        assert_eq!(order_book[7].concentrated_amount, 0);
 
         assert_eq!(order_book[0].concentrated_amount_quote, 0);
         assert_eq!(order_book[1].concentrated_amount_quote, 326693);
@@ -318,6 +320,8 @@ mod order_book_tests {
         assert_eq!(order_book[3].concentrated_amount_quote, 30090);
         assert_eq!(order_book[4].concentrated_amount_quote, 0);
         assert_eq!(order_book[5].concentrated_amount_quote, 0);
+        assert_eq!(order_book[6].concentrated_amount_quote, 0);
+        assert_eq!(order_book[7].concentrated_amount_quote, 0);
 
         assert_eq!(order_book[0].limit_amount, 0);
         assert_eq!(order_book[1].limit_amount, 0);
@@ -326,6 +330,10 @@ mod order_book_tests {
         assert_eq!(order_book[4].limit_amount, 0);
         assert_eq!(order_book[5].limit_amount, 200000);
         assert_eq!(order_book[5].limit_amount_quote, 210801);
+        assert_eq!(order_book[6].limit_amount, 0);
+        assert_eq!(order_book[6].limit_amount_quote, 0);
+        assert_eq!(order_book[7].limit_amount, 0);
+        assert_eq!(order_book[7].limit_amount_quote, 0);
     }
 
     #[test]
@@ -345,9 +353,9 @@ mod order_book_tests {
         tick_arrays[4].ticks[87].part_filled_orders_remaining_input = 100_000;
         let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
-        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 100, false, 6, 6).unwrap();
+        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 8, false, 6, 6).unwrap();
 
-        assert_eq!(order_book.len(), 6);
+        assert_eq!(order_book.len(), 8);
 
         let mut price = 1.0;
         let mut concentrated_total = 0;
@@ -371,6 +379,8 @@ mod order_book_tests {
         assert_eq!(order_book[3].concentrated_amount, 29207);
         assert_eq!(order_book[4].concentrated_amount, 0);
         assert_eq!(order_book[5].concentrated_amount, 0);
+        assert_eq!(order_book[6].concentrated_amount, 0);
+        assert_eq!(order_book[7].concentrated_amount, 0);
 
         assert_eq!(order_book[0].concentrated_amount_quote, 0);
         assert_eq!(order_book[1].concentrated_amount_quote, 326681);
@@ -378,6 +388,8 @@ mod order_book_tests {
         assert_eq!(order_book[3].concentrated_amount_quote, 30089);
         assert_eq!(order_book[4].concentrated_amount_quote, 0);
         assert_eq!(order_book[5].concentrated_amount_quote, 0);
+        assert_eq!(order_book[6].concentrated_amount_quote, 0);
+        assert_eq!(order_book[7].concentrated_amount_quote, 0);
 
         assert_eq!(order_book[0].limit_amount, 0);
         assert_eq!(order_book[1].limit_amount, 0);
@@ -386,6 +398,10 @@ mod order_book_tests {
         assert_eq!(order_book[4].limit_amount, 0);
         assert_eq!(order_book[5].limit_amount, 200000);
         assert_eq!(order_book[5].limit_amount_quote, 210801);
+        assert_eq!(order_book[6].limit_amount, 0);
+        assert_eq!(order_book[6].limit_amount_quote, 0);
+        assert_eq!(order_book[7].limit_amount, 0);
+        assert_eq!(order_book[7].limit_amount_quote, 0);
     }
 
     #[test]
@@ -408,9 +424,9 @@ mod order_book_tests {
         tick_arrays[1].ticks[13].initialized = true;
         let tick_sequence = Box::new(TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap());
 
-        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 100, false, 6, 6).unwrap();
+        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 7, false, 6, 6).unwrap();
 
-        assert_eq!(order_book.len(), 4);
+        assert_eq!(order_book.len(), 7);
 
         let mut price = 1.0;
         let mut concentrated_total = 0;
@@ -462,7 +478,7 @@ mod order_book_tests {
         tick_arrays[1].ticks[13].liquidity_net = -(result.liquidity_delta as i128);
         let tick_sequence = Box::new(TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap());
 
-        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 100, false, 6, 6).unwrap();
+        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 4, false, 6, 6).unwrap();
 
         assert_eq!(order_book.len(), 4);
 
@@ -520,9 +536,9 @@ mod order_book_tests {
         tick_arrays[4].ticks[87].initialized = true;
         let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
-        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 100, true, 6, 6).unwrap();
+        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 10, true, 6, 6).unwrap();
 
-        assert_eq!(order_book.len(), 9);
+        assert_eq!(order_book.len(), 10);
 
         let mut price = 1.0 / 0.5;
         let mut concentrated_total = 0;
@@ -552,11 +568,15 @@ mod order_book_tests {
         assert_eq!(order_book[5].concentrated_amount, 0);
         assert_eq!(order_book[6].concentrated_amount, 0);
         assert_eq!(order_book[7].concentrated_amount, 0);
+        assert_eq!(order_book[8].concentrated_amount, 0);
+        assert_eq!(order_book[9].concentrated_amount, 0);
 
         assert_eq!(order_book[0].limit_amount, 0);
         assert_eq!(order_book[7].limit_amount, 0);
         assert_eq!(order_book[8].limit_amount, 200000);
         assert_eq!(order_book[8].limit_amount_quote, 104266);
+        assert_eq!(order_book[9].limit_amount, 0);
+        assert_eq!(order_book[9].limit_amount_quote, 0);
     }
 
     #[test]
@@ -580,9 +600,9 @@ mod order_book_tests {
         tick_arrays[1].ticks[13].initialized = true;
         let tick_sequence = Box::new(TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap());
 
-        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 100, true, 6, 6).unwrap();
+        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 11, true, 6, 6).unwrap();
 
-        assert_eq!(order_book.len(), 10);
+        assert_eq!(order_book.len(), 11);
 
         let mut price = 1.0 / 0.5;
         let mut concentrated_total = 0;
@@ -614,12 +634,15 @@ mod order_book_tests {
         assert_eq!(order_book[7].concentrated_amount, 320740);
         assert_eq!(order_book[8].concentrated_amount, 106009);
         assert_eq!(order_book[9].concentrated_amount, 0);
+        assert_eq!(order_book[10].concentrated_amount, 0);
 
         assert_eq!(order_book[0].limit_amount, 0);
         assert_eq!(order_book[7].limit_amount, 0);
         assert_eq!(order_book[8].limit_amount, 0);
         assert_eq!(order_book[9].limit_amount, 200000);
         assert_eq!(order_book[9].limit_amount_quote, 418836);
+        assert_eq!(order_book[10].limit_amount, 0);
+        assert_eq!(order_book[10].limit_amount_quote, 0);
     }
 
     #[test]
@@ -639,7 +662,7 @@ mod order_book_tests {
         tick_arrays[3].ticks[62].initialized = true;
         let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
-        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 100, false, 6, 6).unwrap();
+        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 1, false, 6, 6).unwrap();
 
         assert_eq!(order_book.len(), 1);
         assert!(order_book[0].ask_side);
@@ -664,7 +687,7 @@ mod order_book_tests {
         tick_arrays[1].ticks[13].initialized = true;
         let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
-        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 100, false, 6, 6).unwrap();
+        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 1, false, 6, 6).unwrap();
 
         assert_eq!(order_book.len(), 1);
         assert!(!order_book[0].ask_side);
