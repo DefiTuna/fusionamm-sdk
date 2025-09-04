@@ -17,9 +17,7 @@ use solana_client::{
 use solana_pubkey::Pubkey;
 
 use super::fetch_decoded_program_accounts;
-use crate::{generated::shared::DecodedAccount, FusionPool};
-
-pub const FUSION_POOL_DISCRIMINATOR: &[u8] = &[254, 204, 207, 98, 25, 181, 29, 67];
+use crate::{generated::shared::DecodedAccount, FusionPool, FUSION_POOL_DISCRIMINATOR};
 
 #[derive(Debug, Clone)]
 pub enum FusionPoolFilter {
@@ -55,6 +53,6 @@ pub async fn fetch_all_fusion_pool_with_filter(
     filters: Vec<FusionPoolFilter>,
 ) -> Result<Vec<DecodedAccount<FusionPool>>, Box<dyn Error>> {
     let mut filters: Vec<RpcFilterType> = filters.into_iter().map(|filter| filter.into()).collect();
-    filters.push(RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, FUSION_POOL_DISCRIMINATOR)));
+    filters.push(RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, &FUSION_POOL_DISCRIMINATOR)));
     fetch_decoded_program_accounts(rpc, filters).await
 }

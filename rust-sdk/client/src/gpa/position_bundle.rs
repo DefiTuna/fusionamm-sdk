@@ -15,11 +15,9 @@ use solana_client::rpc_filter::Memcmp;
 use solana_client::rpc_filter::RpcFilterType;
 use solana_pubkey::Pubkey;
 
-use crate::{generated::shared::DecodedAccount, PositionBundle};
+use crate::{generated::shared::DecodedAccount, PositionBundle, POSITION_BUNDLE_DISCRIMINATOR};
 
 use super::fetch_decoded_program_accounts;
-
-pub const POSITION_BUNDLE_DISCRIMINATOR: &[u8] = &[129, 169, 175, 65, 185, 95, 32, 100];
 
 #[derive(Debug, Clone)]
 pub enum PositionBundleFilter {
@@ -39,6 +37,6 @@ pub async fn fetch_all_position_bundle_with_filter(
     filters: Vec<PositionBundleFilter>,
 ) -> Result<Vec<DecodedAccount<PositionBundle>>, Box<dyn Error>> {
     let mut filters: Vec<RpcFilterType> = filters.into_iter().map(|filter| filter.into()).collect();
-    filters.push(RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, POSITION_BUNDLE_DISCRIMINATOR)));
+    filters.push(RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, &POSITION_BUNDLE_DISCRIMINATOR)));
     fetch_decoded_program_accounts(rpc, filters).await
 }

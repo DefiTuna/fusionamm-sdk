@@ -1,6 +1,6 @@
 {
   "name": "@crypticdot/fusionamm-sdk",
-  "version": "1.0.59",
+  "version": "1.0.62",
   "description": "High-level typescript sdk to interact with on-chain FusionAMM program.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -36,7 +36,7 @@
     "@solana-program/memo": "^0.7.0",
     "@solana-program/system": "^0.7.0",
     "@solana-program/token": "^0.5.1",
-    "@solana-program/token-2022": "^0.4.0",
+    "@solana-program/token-2022": "^0.4.2",
     "@solana/sysvars": "^2.1.0",
     "@solana/kit": "^2.1.0"
   },

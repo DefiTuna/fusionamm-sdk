@@ -29,17 +29,17 @@ import type {
   Rpc,
   TransactionSigner,
 } from "@solana/kit";
-import {address, generateKeyPairSigner, getAddressDecoder, getAddressEncoder, lamports} from "@solana/kit";
-import {NATIVE_MINT_WRAPPING_STRATEGY} from "./config";
+import { address, generateKeyPairSigner, getAddressDecoder, getAddressEncoder, lamports } from "@solana/kit";
+import { NATIVE_MINT_WRAPPING_STRATEGY } from "./config";
 import {
   getCreateAccountInstruction,
   getCreateAccountWithSeedInstruction,
   getTransferSolInstruction,
 } from "@solana-program/system";
-import {getTokenSize} from "@solana-program/token";
-import {getTokenSize as getTokenSizeWithExtensions} from "@solana-program/token-2022";
-import type {ExtensionArgs, Mint} from "@solana-program/token-2022";
-import type {TransferFee} from "@crypticdot/fusionamm-core";
+import { getTokenSize } from "@solana-program/token";
+import { getTokenSize as getTokenSizeWithExtensions, TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
+import type { ExtensionArgs, Mint } from "@solana-program/token-2022";
+import type { TransferFee } from "@crypticdot/fusionamm-core";
 import assert from "assert";
 
 // This file is not exported through the barrel file

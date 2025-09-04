@@ -207,6 +207,8 @@ describe("get program account memcmp filters", () => {
       ordersFilledAmountB: 0,
       olpFeeOwedA: 0,
       olpFeeOwedB: 0,
+      maSqrtPrice: 345624531235n,
+      lastSwapTimestamp: 2323123,
       reserved: new Uint8Array(),
     };
     await fetchAllFusionPoolWithFilter(

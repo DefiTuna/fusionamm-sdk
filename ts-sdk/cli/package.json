@@ -17,7 +17,7 @@
     "@crypticdot/fusionamm-tx-sender": "workspace:*",
     "@oclif/core": "^4.2.10",
     "@solana-program/memo": "^0.7.0",
-    "@solana-program/token-2022": "^0.4.0",
+    "@solana-program/token-2022": "^0.4.2",
     "@solana/kit": "^2.1.0",
     "dotenv": "^16.4.7"
   },

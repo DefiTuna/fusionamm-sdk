@@ -47,11 +47,13 @@ export async function addPriorityInstructions(
   if (config.jito.type !== "none") {
     message = await processJitoTipForTxMessage(message, signer, config);
   }
-  let computeUnits = await getComputeUnitsForTxMessage(rpc, message);
 
-  if (!computeUnits) {
+  let computeUnits = 1_400_000;
+
+  try {
+    computeUnits = await getComputeUnitsForTxMessage(rpc, message);
+  } catch {
     console.warn("Transaction simulation failed, using 1,400,000 compute units");
-    computeUnits = 1_400_000;
   }
 
   return processComputeBudgetForTxMessage(rpc, message, computeUnits, config);

@@ -2,15 +2,15 @@ import { Args, Command, Flags } from "@oclif/core";
 import { address, Address, getBase58Codec, SolanaError } from "@solana/kit";
 
 export const bigintArg = Args.custom<bigint>({
-  parse: async (input) => BigInt(input),
+  parse: async input => BigInt(input),
 });
 
 export const bigintFlag = Flags.custom<bigint | undefined>({
-  parse: async (input) => BigInt(input),
+  parse: async input => BigInt(input),
 });
 
 export const percentArg = Args.custom<number>({
-  parse: async (input) => {
+  parse: async input => {
     const percent = Number(input);
     if (percent > 100) throw "Percent value must be less or equal than 100";
     if (percent < 0) throw "Percent value can't be negative";
@@ -19,7 +19,7 @@ export const percentArg = Args.custom<number>({
 });
 
 export const percentFlag = Flags.custom<number>({
-  parse: async (input) => {
+  parse: async input => {
     const percent = Number(input);
     if (percent > 100) throw "Percent value must be less or equal than 100";
     if (percent < 0) throw "Percent value can't be negative";
@@ -28,7 +28,7 @@ export const percentFlag = Flags.custom<number>({
 });
 
 export const addressArg = Args.custom<Address>({
-  parse: async (input) => {
+  parse: async input => {
     try {
       return address(input);
     } catch {
@@ -38,7 +38,7 @@ export const addressArg = Args.custom<Address>({
 });
 
 export const addressFlag = Flags.custom<Address>({
-  parse: async (input) => {
+  parse: async input => {
     try {
       return address(input);
     } catch {
@@ -48,7 +48,7 @@ export const addressFlag = Flags.custom<Address>({
 });
 
 export const pythFeedIdFlag = Flags.custom<Address>({
-  parse: async (input) => {
+  parse: async input => {
     try {
       if (input.startsWith("0x")) input = input.slice(2);
       return address(getBase58Codec().decode(Buffer.from(input, "hex")));
@@ -59,7 +59,7 @@ export const pythFeedIdFlag = Flags.custom<Address>({
 });
 
 export const priceArg = Args.custom<number>({
-  parse: async (input) => {
+  parse: async input => {
     let price = 0;
     try {
       price = Number(input);
@@ -74,7 +74,7 @@ export const priceArg = Args.custom<number>({
 });
 
 export const priceFlag = Flags.custom<number>({
-  parse: async (input) => {
+  parse: async input => {
     let price = 0;
     try {
       price = Number(input);
@@ -98,6 +98,9 @@ export default abstract class BaseCommand extends Command {
       console.log(solanaError.context);
     } else {
       console.log(err.message);
+      if (err.cause) {
+        console.log(err.cause);
+      }
     }
   }
 }

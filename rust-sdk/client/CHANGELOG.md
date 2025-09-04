@@ -1,5 +1,19 @@
 # @crypticdot/fusionamm-rust-client
 
+## 1.0.62
+
+### Patch Changes
+
+- 99f630c: Added MA price
+
+## 1.0.61
+
+## 1.0.60
+
+### Patch Changes
+
+- 231557e: Updated the codama and generated rust client
+
 ## 1.0.59
 
 ## 1.0.58

@@ -114,7 +114,7 @@ export async function setupPosition(
   const positionMint = getNextKeypair();
   const fusionPoolAccount = await fetchFusionPool(rpc, fusionPool);
   const tickLower = config.tickLower ?? -100;
-  const tickUpper = config.tickLower ?? 100;
+  const tickUpper = config.tickUpper ?? 100;
 
   const initializableLowerTickIndex = getInitializableTickIndex(tickLower, fusionPoolAccount.data.tickSpacing, false);
   const initializableUpperTickIndex = getInitializableTickIndex(tickUpper, fusionPoolAccount.data.tickSpacing, true);

@@ -15,7 +15,7 @@ use serde_json::Value;
 use solana_program::native_token::LAMPORTS_PER_SOL;
 use std::time::Duration;
 use tokio::task::JoinHandle;
-use tokio::time::sleep;
+use tokio::time::{sleep, Instant};
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::tungstenite::Message;
@@ -87,9 +87,11 @@ pub async fn poll_jito_bundle_statuses(
     interval: Duration,
     timeout: Duration,
 ) -> Result<String> {
-    let start: tokio::time::Instant = tokio::time::Instant::now();
+    let start = Instant::now();
 
-    while start.elapsed() < timeout {
+    loop {
+        sleep(interval).await;
+
         let bundle_statuses = get_bundle_statuses(client.clone(), vec![bundle_id.clone()], jito_api_url).await?;
 
         if let Some(values) = bundle_statuses["result"]["value"].as_array() {
@@ -102,10 +104,12 @@ pub async fn poll_jito_bundle_statuses(
             }
         }
 
-        sleep(interval).await;
+        if start.elapsed() > timeout {
+            break;
+        }
     }
 
-    Err(anyhow!("Unable to confirm jito bundle {} in {} seconds", bundle_id, timeout.as_secs()))
+    Err(anyhow!("Unable to confirm jito bundle {} in {} seconds", bundle_id, start.elapsed().as_secs()))
 }
 
 /// Get the status of Jito bundles

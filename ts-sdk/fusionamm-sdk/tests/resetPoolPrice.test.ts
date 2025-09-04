@@ -8,24 +8,14 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import {
-  fetchPosition,
-  FUSIONAMM_ERROR__RESET_PRICE_FOR_NON_EMPTY_POOL,
-  FUSIONAMM_ERROR__SET_RANGE_FOR_NON_EMPTY_POSITION,
-  getPositionAddress,
-  getResetPoolPriceInstruction,
-  getSetPositionRangeInstruction,
-} from "@crypticdot/fusionamm-client";
-import { findAssociatedTokenPda } from "@solana-program/token";
-import { TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
+import { FUSIONAMM_ERROR__RESET_PRICE_FOR_NON_EMPTY_POOL } from "@crypticdot/fusionamm-client";
 import { Address } from "@solana/kit";
 import assert from "assert";
 import { beforeAll, describe, expect, it } from "vitest";
-import { decreaseLiquidityInstructions } from "../src";
-import { rpc, sendTransaction, signer } from "./utils/mockRpc";
+import { rpc, sendTransaction } from "./utils/mockRpc";
 import { setupAta, setupMint } from "./utils/token";
 import { setupPosition, setupFusionPool } from "./utils/program";
-import { resetPoolPriceInstruction } from "../src/resetPoolPrice";
+import { resetPoolPriceInstruction } from "../src";
 
 describe("Set Position Range", () => {
   let mintA: Address;

@@ -1,8 +1,8 @@
-import {fetchMaybeFusionPool, fetchAllFusionPoolWithFilter} from "@crypticdot/fusionamm-client";
-import BaseCommand, {addressArg} from "../base";
-import {rpc} from "../rpc";
-import {fetchAllMint} from "@solana-program/token-2022";
-import {sqrtPriceToPrice} from "@crypticdot/fusionamm-core";
+import { fetchMaybeFusionPool, fetchAllFusionPoolWithFilter } from "@crypticdot/fusionamm-client";
+import BaseCommand, { addressArg } from "../base";
+import { rpc } from "../rpc";
+import { fetchAllMint } from "@solana-program/token-2022";
+import { sqrtPriceToPrice } from "@crypticdot/fusionamm-core";
 
 export default class FetchPool extends BaseCommand {
   static override args = {
@@ -14,7 +14,7 @@ export default class FetchPool extends BaseCommand {
   static override examples = ["<%= config.bin %> <%= command.id %> 3qx1xPHwQopPXQPPjZDNZ4PnKpQvYeC3s8tPHcC5Ux1V"];
 
   public async run() {
-    const {args, flags} = await this.parse(FetchPool);
+    const { args, flags } = await this.parse(FetchPool);
 
     const fusionPoolAddress = args.pool;
 
@@ -28,6 +28,10 @@ export default class FetchPool extends BaseCommand {
         console.log(
           "Current pool price:",
           sqrtPriceToPrice(fusionPool.data.sqrtPrice, mintA.data.decimals, mintB.data.decimals),
+        );
+        console.log(
+          "Current pool MA price:",
+          sqrtPriceToPrice(fusionPool.data.maSqrtPrice, mintA.data.decimals, mintB.data.decimals),
         );
       } else {
         throw new Error(`Fusion pool is not found at address ${fusionPoolAddress}`);

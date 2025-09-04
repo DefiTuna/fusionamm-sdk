@@ -71,9 +71,7 @@ export default class InitializePool extends BaseCommand {
     }
 
     const fusionPoolAddress = (await getFusionPoolAddress(mintA.address, mintB.address, tickSpacing))[0];
-
     const tokenBadgeAAddress = (await getTokenBadgeAddress(mintA.address))[0];
-
     const tokenBadgeBAddress = (await getTokenBadgeAddress(mintB.address))[0];
 
     const initialSqrtPrice = priceToSqrtPrice(args.initialPrice, mintA.data.decimals, mintB.data.decimals);

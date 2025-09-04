@@ -1,9 +1,5 @@
 import {
   fetchMaybeFusionPool,
-  getInitializePoolInstruction,
-  getTokenBadgeAddress,
-  getFusionPoolAddress,
-  fetchMaybeFusionPoolsConfig,
   getFusionPoolsConfigAddress,
   getResetPoolPriceInstruction,
 } from "@crypticdot/fusionamm-client";
@@ -11,9 +7,7 @@ import { priceToSqrtPrice, sqrtPriceToPrice } from "@crypticdot/fusionamm-core";
 import { sendTransaction } from "@crypticdot/fusionamm-tx-sender";
 import BaseCommand, { addressArg, priceArg } from "../base";
 import { rpc, signer } from "../rpc";
-import { Args } from "@oclif/core";
-import { fetchAllMint, fetchMaybeMint, fetchMint } from "@solana-program/token-2022";
-import { generateKeyPairSigner } from "@solana/kit";
+import { fetchAllMint } from "@solana-program/token-2022";
 
 export default class ResetPoolPrice extends BaseCommand {
   static override args = {

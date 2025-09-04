@@ -15,9 +15,7 @@ use solana_client::rpc_filter::{Memcmp, RpcFilterType};
 use solana_pubkey::Pubkey;
 
 use super::fetch_decoded_program_accounts;
-use crate::{generated::shared::DecodedAccount, TickArray};
-
-pub const TICK_ARRAY_DISCRIMINATOR: &[u8] = &[69, 97, 189, 190, 110, 7, 66, 187];
+use crate::{generated::shared::DecodedAccount, TickArray, TICK_ARRAY_DISCRIMINATOR};
 
 #[derive(Debug, Clone)]
 pub enum TickArrayFilter {
@@ -39,6 +37,6 @@ pub async fn fetch_all_tick_array_with_filter(
     filters: Vec<TickArrayFilter>,
 ) -> Result<Vec<DecodedAccount<TickArray>>, Box<dyn Error>> {
     let mut filters: Vec<RpcFilterType> = filters.into_iter().map(|filter| filter.into()).collect();
-    filters.push(RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, TICK_ARRAY_DISCRIMINATOR)));
+    filters.push(RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, &TICK_ARRAY_DISCRIMINATOR)));
     fetch_decoded_program_accounts(rpc, filters).await
 }

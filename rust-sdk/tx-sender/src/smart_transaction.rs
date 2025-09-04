@@ -419,6 +419,6 @@ async fn poll_transaction_confirmation(
 
     Err(ClientError {
         request: None,
-        kind: ClientErrorKind::Custom(format!("Unable to confirm transaction {} in {} seconds", tx_sig, timeout.as_secs())),
+        kind: ClientErrorKind::Custom(format!("Unable to confirm transaction {} in {} seconds", tx_sig, start.elapsed().as_secs())),
     })
 }

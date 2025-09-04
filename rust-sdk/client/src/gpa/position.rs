@@ -16,11 +16,9 @@ use solana_client::{
 };
 use solana_pubkey::Pubkey;
 
-use crate::{generated::shared::DecodedAccount, Position};
+use crate::{generated::shared::DecodedAccount, Position, POSITION_DISCRIMINATOR};
 
 use super::fetch_decoded_program_accounts;
-
-pub const POSITION_DISCRIMINATOR: &[u8] = &[170, 188, 143, 228, 122, 64, 247, 208];
 
 #[derive(Debug, Clone)]
 pub enum PositionFilter {
@@ -47,6 +45,6 @@ impl From<PositionFilter> for RpcFilterType {
 
 pub async fn fetch_all_position_with_filter(rpc: &RpcClient, filters: Vec<PositionFilter>) -> Result<Vec<DecodedAccount<Position>>, Box<dyn Error>> {
     let mut filters: Vec<RpcFilterType> = filters.into_iter().map(|filter| filter.into()).collect();
-    filters.push(RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, POSITION_DISCRIMINATOR)));
+    filters.push(RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, &POSITION_DISCRIMINATOR)));
     fetch_decoded_program_accounts(rpc, filters).await
 }

@@ -1,5 +1,15 @@
 # @crypticdot/fusionamm-core
 
+## 1.0.62
+
+### Patch Changes
+
+- 99f630c: Added MA price
+
+## 1.0.61
+
+## 1.0.60
+
 ## 1.0.59
 
 ## 1.0.58

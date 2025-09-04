@@ -1,6 +1,6 @@
 {
   "name": "@crypticdot/fusionamm-rust-client",
-  "version": "1.0.59",
+  "version": "1.0.62",
   "type": "module",
   "private": true,
   "files": [],
@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@codama/nodes-from-anchor": "^1.1.14",
-    "@codama/renderers": "^1.0.24",
+    "@codama/renderers-rust": "^1.2.2",
     "@crypticdot/fusionamm-program": "workspace:*",
     "@crypticdot/fusionamm-rust-core": "workspace:*",
     "codama": "^1.2.14"

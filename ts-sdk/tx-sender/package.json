@@ -1,7 +1,7 @@
 {
   "name": "@crypticdot/fusionamm-tx-sender",
   "description": "A TypeScript package for building and sending Solana transactions with support for priority fees and Jito tips.",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

@@ -104,7 +104,7 @@ export async function sendSignedTransaction(
     .send();
 
   if (simResult.value.err) {
-    throw new Error(`Transaction simulation failed: ${simResult.value.err}`);
+    throw new Error(`Transaction simulation failed`, { cause: simResult.value });
   }
 
   const expiryTime = Date.now() + 60_000;
@@ -122,7 +122,7 @@ export async function sendSignedTransaction(
     const status = value[0];
     if (status?.confirmationStatus === commitment) {
       if (status.err) {
-        throw new Error(`Transaction failed: ${status.err}`);
+        throw new Error(`Transaction failed`, { cause: status.err });
       }
       return txHash;
     }

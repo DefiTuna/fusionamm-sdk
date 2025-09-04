@@ -1,5 +1,29 @@
 # @crypticdot/fusionamm
 
+## 1.0.62
+
+### Patch Changes
+
+- 99f630c: Added MA price
+- Updated dependencies [99f630c]
+  - @crypticdot/fusionamm-client@1.0.62
+  - @crypticdot/fusionamm-core@1.0.62
+
+## 1.0.61
+
+### Patch Changes
+
+- 9ce4e13: Improved token-2022 support
+  - @crypticdot/fusionamm-core@1.0.61
+  - @crypticdot/fusionamm-client@1.0.61
+
+## 1.0.60
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.60
+- @crypticdot/fusionamm-client@1.0.60
+
 ## 1.0.59
 
 ### Patch Changes

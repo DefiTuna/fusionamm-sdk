@@ -16,11 +16,9 @@ use solana_client::{
 };
 use solana_pubkey::Pubkey;
 
-use crate::{generated::shared::DecodedAccount, LimitOrder};
+use crate::{generated::shared::DecodedAccount, LimitOrder, LIMIT_ORDER_DISCRIMINATOR};
 
 use super::fetch_decoded_program_accounts;
-
-pub const LIMIT_ORDER_DISCRIMINATOR: &[u8] = &[137, 183, 212, 91, 115, 29, 141, 227];
 
 #[derive(Debug, Clone)]
 pub enum LimitOrderFilter {
@@ -42,6 +40,6 @@ pub async fn fetch_all_limit_order_with_filter(
     filters: Vec<LimitOrderFilter>,
 ) -> Result<Vec<DecodedAccount<LimitOrder>>, Box<dyn Error>> {
     let mut filters: Vec<RpcFilterType> = filters.into_iter().map(|filter| filter.into()).collect();
-    filters.push(RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, LIMIT_ORDER_DISCRIMINATOR)));
+    filters.push(RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, &LIMIT_ORDER_DISCRIMINATOR)));
     fetch_decoded_program_accounts(rpc, filters).await
 }

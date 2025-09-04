@@ -1,5 +1,17 @@
 # @crypticdot/fusionamm-rust-tx-sender
 
+## 1.0.18
+
+### Patch Changes
+
+- cb60168: bugfix: jito bundles are not confirmed
+
+## 1.0.17
+
+### Patch Changes
+
+- 521d3b5: Updated jito budles polling
+
 ## 1.0.16
 
 ### Patch Changes
