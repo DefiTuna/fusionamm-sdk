@@ -2,3 +2,4 @@ packages:
   - "programs/*"
   - "rust-sdk/*"
   - "ts-sdk/*"
+minimumReleaseAge: 28800
