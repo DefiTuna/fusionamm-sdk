@@ -1,5 +1,11 @@
 # @crypticdot/fusionamm-rust-tx-sender
 
+## 1.0.19
+
+### Patch Changes
+
+- 16c021d: Added ability not to wait for the transaction confirmation
+
 ## 1.0.18
 
 ### Patch Changes

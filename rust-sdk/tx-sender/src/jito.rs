@@ -13,6 +13,8 @@ use reqwest::{Client, Method, Url};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use solana_program::native_token::LAMPORTS_PER_SOL;
+use solana_signature::Signature;
+use std::str::FromStr;
 use std::time::Duration;
 use tokio::task::JoinHandle;
 use tokio::time::{sleep, Instant};
@@ -86,7 +88,7 @@ pub async fn poll_jito_bundle_statuses(
     jito_api_url: &str,
     interval: Duration,
     timeout: Duration,
-) -> Result<String> {
+) -> Result<Signature> {
     let start = Instant::now();
 
     loop {
@@ -98,7 +100,9 @@ pub async fn poll_jito_bundle_statuses(
             if !values.is_empty() {
                 if let Some(status) = values[0]["confirmation_status"].as_str() {
                     if status == "confirmed" {
-                        return Ok(values[0]["transactions"][0].as_str().unwrap().to_string());
+                        let signature_str = values[0]["transactions"][0].as_str().unwrap().to_string();
+                        let signature = Signature::from_str(&signature_str)?;
+                        return Ok(signature);
                     }
                 }
             }

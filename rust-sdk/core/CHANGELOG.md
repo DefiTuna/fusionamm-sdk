@@ -1,5 +1,11 @@
 # @crypticdot/fusionamm-rust-core
 
+## 1.0.63
+
+### Patch Changes
+
+- 74e1d40: Fixed incorrect math in limit_order_quote_by_input_token()
+
 ## 1.0.62
 
 ### Patch Changes

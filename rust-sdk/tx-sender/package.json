@@ -1,7 +1,7 @@
 {
   "name": "@crypticdot/fusionamm-rust-tx-sender",
   "description": "A Rust package for building and sending Solana transactions with support for priority fees and Jito tips.",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
   "sideEffects": false,

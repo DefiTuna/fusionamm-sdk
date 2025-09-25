@@ -24,8 +24,8 @@ import {
   fetchFusionPool,
   fetchLimitOrder,
   fetchTickArray,
-  FusionPool,
-  getLimitOrderAddress,
+  FusionPool, getFusionPoolsConfigAddress,
+  getLimitOrderAddress, getSetClpRewardRateInstruction, getSetOrderProtocolFeeRateInstruction,
   getTickArrayAddress,
 } from "@crypticdot/fusionamm-client";
 import { fetchAllMint, fetchMint, fetchToken } from "@solana-program/token-2022";
@@ -33,7 +33,12 @@ import { Account, Address, KeyPairSigner } from "@solana/kit";
 import assert from "assert";
 import { setupFusionPool } from "./utils/program";
 import { setupAtaTE, setupMintTE, setupMintTEFee } from "./utils/tokenExtensions";
-import { getTickArrayStartTickIndex, sqrtPriceToPrice } from "@crypticdot/fusionamm-core";
+import {
+  decreaseLimitOrderQuote,
+  getTickArrayStartTickIndex,
+  limitOrderQuoteByInputToken,
+  sqrtPriceToPrice,
+} from "@crypticdot/fusionamm-core";
 
 const mintTypes = new Map([
   ["A", setupMint],
@@ -56,7 +61,8 @@ const poolTypes = ["A-B", "A-TEA", "TEA-TEB", "A-TEFee"];
 describe("Limit Orders", () => {
   const tickSpacing = 64;
 
-  beforeAll(async () => {});
+  beforeAll(async () => {
+  });
 
   const fetchAndLogTickByTickIndex = async (fusionPool: Account<FusionPool>, tickIndex: number) => {
     const tickArrayStartIndex = getTickArrayStartTickIndex(tickIndex, fusionPool.data.tickSpacing);
@@ -366,5 +372,92 @@ describe("Limit Orders", () => {
     expect(harvestIx.feesQuote.feeOwedB).equals(138n);
     expect(harvestIx.feesQuote.feeOwedA).equals(tokenAAfter.data.amount - tokenABefore.data.amount);
     expect(harvestIx.feesQuote.feeOwedB).equals(tokenBAfter.data.amount - tokenBBefore.data.amount);
+  });
+
+  it(`Quote and decrease limit order`, async () => {
+    const mintAName = "A";
+    const mintBName = "B";
+    const setupMintA = mintTypes.get(mintAName)!;
+    const setupMintB = mintTypes.get(mintBName)!;
+    const setupAtaA = ataTypes.get(mintAName)!;
+    const setupAtaB = ataTypes.get(mintBName)!;
+
+    const mintAAddress = await setupMintA();
+    const mintBAddress = await setupMintB();
+    const mintA = await fetchMint(rpc, mintAAddress);
+    const mintB = await fetchMint(rpc, mintBAddress);
+    const ataAAddress = await setupAtaA(mintAAddress, { amount: 100_000_000n });
+    const ataBAddress = await setupAtaB(mintBAddress, { amount: 100_000_000n });
+    const poolAddress = await setupFusionPool(mintAAddress, mintBAddress, tickSpacing);
+
+    await sendTransaction(
+      [
+        getSetClpRewardRateInstruction({
+          clpRewardRate: 3000,
+          feeAuthority: signer,
+          fusionPool: poolAddress,
+          fusionPoolsConfig: (await getFusionPoolsConfigAddress())[0],
+        }),
+        getSetOrderProtocolFeeRateInstruction({
+          orderProtocolFeeRate: 3000,
+          feeAuthority: signer,
+          fusionPool: poolAddress,
+          fusionPoolsConfig: (await getFusionPoolsConfigAddress())[0],
+        }),
+      ],
+    );
+
+    const limitOrdersArgs = [
+      { amount: 1_000_000n, priceOffset: -0.06, aToB: false }, // 1st
+      { amount: 1_000_000n, priceOffset: -0.1, aToB: false }, // 2nd
+    ];
+
+    const orders = [];
+    let fusionPool = await fetchFusionPool(rpc, poolAddress);
+    let currentPrice = sqrtPriceToPrice(fusionPool.data.sqrtPrice, mintA.data.decimals, mintB.data.decimals);
+
+    for (const args of limitOrdersArgs) {
+      orders.push(
+        await testOpenLimitOrder({
+          ...args,
+          priceOrTickIndex: { price: currentPrice + args.priceOffset },
+          poolAddress,
+          signer,
+        }),
+      );
+    }
+
+    const limitOrder = orders[0].data;
+
+    // Quote the limit order output
+    const quotedAmountOut = limitOrderQuoteByInputToken(orders[0].data.amount, orders[0].data.aToB, orders[0].data.tickIndex, fusionPool.data);
+    // The actual limit order output will be 1066247n.
+    // It happens because the quote function has different math. A small error is fine.
+    expect(quotedAmountOut).toEqual(1066245n);
+
+    // The 1st order will be fulfilled.
+    await testSwapExactInput({ poolAddress, inputAmount: 1_500_000n, mint: mintAAddress });
+
+    fusionPool = await fetchFusionPool(rpc, poolAddress);
+    const startTickIndex = getTickArrayStartTickIndex(limitOrder.tickIndex, fusionPool.data.tickSpacing);
+    const tickArrayAddress = await getTickArrayAddress(fusionPool.address, startTickIndex);
+    const tickArray = await fetchTickArray(rpc, tickArrayAddress[0]);
+
+    // Decrease Limit Order Quote
+    const tick = tickArray.data.ticks[(limitOrder.tickIndex - startTickIndex) / fusionPool.data.tickSpacing];
+    const decreaseQuote = decreaseLimitOrderQuote(fusionPool.data, limitOrder, tick, limitOrder.amount);
+    expect(decreaseQuote.amountOutA).toEqual(1066247n);
+    expect(decreaseQuote.amountOutB).toEqual(0n);
+
+    // Execute the decrease order instruction
+    const tokenBeforeA = await fetchToken(rpc, ataAAddress);
+    const tokenBeforeB = await fetchToken(rpc, ataBAddress);
+    await testCloseLimitOrder({
+      limitOrderMint: orders[0].data.limitOrderMint,
+    });
+    const tokenAfterA = await fetchToken(rpc, ataAAddress);
+    const tokenAfterB = await fetchToken(rpc, ataBAddress);
+    expect(tokenAfterA.data.amount - tokenBeforeA.data.amount).toEqual(1066247n);
+    expect(tokenAfterB.data.amount - tokenBeforeB.data.amount).toEqual(0n);
   });
 });

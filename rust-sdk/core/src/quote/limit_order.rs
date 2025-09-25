@@ -31,12 +31,14 @@ pub fn limit_order_quote_by_input_token(
     let sqrt_price: u128 = tick_index_to_sqrt_price(tick_index).into();
     let mut amount_out = get_limit_order_output_amount(amount_in, a_to_b_order, sqrt_price, false)?;
 
-    // The total swap fee.
+    // Total Output Amount = amount_out + reward = amount_out + swap_fee⋅(1 - order_protocol_fee_rate)⋅(1 - clp_reward_rate)
     let mut swap_fee = try_reverse_apply_swap_fee(amount_out.into(), fusion_pool.fee_rate)? - amount_out;
-    // Deduct the protocol fee from the total swap fee.
+    // Deduct the order protocol fee from the total swap fee.
     swap_fee -= try_mul_div(swap_fee, fusion_pool.order_protocol_fee_rate as u128, PROTOCOL_FEE_RATE_MUL_VALUE as u128, false)?;
+    // Deduct the CLP (Concentrated Liquidity Provider) reward incentive.
+    swap_fee -= try_mul_div(swap_fee, fusion_pool.clp_reward_rate as u128, MAX_CLP_REWARD_RATE as u128, false)?;
     // Add the order liquidity provider reward.
-    amount_out += swap_fee - try_mul_div(swap_fee, (MAX_CLP_REWARD_RATE - fusion_pool.clp_reward_rate) as u128, MAX_CLP_REWARD_RATE as u128, false)?;
+    amount_out += swap_fee;
 
     Ok(amount_out)
 }
@@ -369,7 +371,7 @@ mod tests {
         assert_eq!(
             limit_order_quote_by_input_token(10_000, true, price_to_tick_index(2.0, 1, 1), test_fusion_pool(1 << 64, ONE_PCT_FEE_RATE, 0, 0))
                 .unwrap(),
-            19998
+            20200
         );
 
         // 1% swap fee, clp_reward_rate = 50%

@@ -56,6 +56,8 @@ pub struct SmartTxConfig {
     pub ingore_simulation_error: bool,
     /// Specifies whether signature verification is required during the simulation.
     pub sig_verify_on_simulation: bool,
+    /// Wait for the transaction confirmation.
+    pub wait_for_confirmation: bool,
     /// Transaction confirmation polling interval. The default value is 2 seconds.
     pub polling_interval: Option<Duration>,
     /// The default timeout is 60 seconds.
@@ -74,6 +76,7 @@ impl Default for SmartTxConfig {
             disable_simulation: false,
             ingore_simulation_error: false,
             sig_verify_on_simulation: true,
+            wait_for_confirmation: true,
             polling_interval: None,
             transaction_timeout: None,
             blockhash: None,
@@ -120,7 +123,7 @@ impl Display for SmartTxElapsedTime {
 #[derive(Clone)]
 pub struct SmartTxResult {
     /// The transaction signature.
-    pub signature: String,
+    pub signature: Option<Signature>,
     /// Used priority fee (micro lamports per compute unit).
     pub priority_fee: u64,
     /// Jito bundle id if the transaction has been sent via Jito.
@@ -300,18 +303,28 @@ pub async fn send_smart_transaction(
         elapsed_time.send = start.elapsed();
 
         // Wait for the confirmation.
-        let signature = poll_jito_bundle_statuses(jito_client.clone(), jito_bundle_id.clone(), &jito_api_url, polling_interval, transaction_timeout)
-            .await
-            .map_err(|e| SmartTransactionError::JitoClientError(e.to_string()))?;
+        if tx_config.wait_for_confirmation {
+            let signature =
+                poll_jito_bundle_statuses(jito_client.clone(), jito_bundle_id.clone(), &jito_api_url, polling_interval, transaction_timeout)
+                    .await
+                    .map_err(|e| SmartTransactionError::JitoClientError(e.to_string()))?;
 
-        elapsed_time.confirm = start.elapsed();
+            elapsed_time.confirm = start.elapsed();
 
-        Ok(SmartTxResult {
-            signature,
-            priority_fee,
-            jito_bundle_id: Some(jito_bundle_id),
-            elapsed_time,
-        })
+            Ok(SmartTxResult {
+                signature: Some(signature),
+                priority_fee,
+                jito_bundle_id: Some(jito_bundle_id),
+                elapsed_time,
+            })
+        } else {
+            Ok(SmartTxResult {
+                signature: None,
+                priority_fee,
+                jito_bundle_id: Some(jito_bundle_id),
+                elapsed_time,
+            })
+        }
     } else {
         let send_config = RpcSendTransactionConfig {
             skip_preflight: true,
@@ -326,12 +339,13 @@ pub async fn send_smart_transaction(
         elapsed_time.send = start.elapsed();
 
         // Wait for the confirmation.
-        poll_transaction_confirmation(client, signature, polling_interval, transaction_timeout).await?;
-
-        elapsed_time.confirm = start.elapsed();
+        if tx_config.wait_for_confirmation {
+            poll_transaction_confirmation(client, signature, polling_interval, transaction_timeout).await?;
+            elapsed_time.confirm = start.elapsed();
+        }
 
         Ok(SmartTxResult {
-            signature: signature.to_string(),
+            signature: Some(signature),
             priority_fee,
             jito_bundle_id: None,
             elapsed_time,
