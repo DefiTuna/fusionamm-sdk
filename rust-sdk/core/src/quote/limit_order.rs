@@ -35,7 +35,7 @@ pub fn limit_order_quote_by_input_token(
     let mut swap_fee = try_reverse_apply_swap_fee(amount_out.into(), fusion_pool.fee_rate)? - amount_out;
     // Deduct the order protocol fee from the total swap fee.
     swap_fee -= try_mul_div(swap_fee, fusion_pool.order_protocol_fee_rate as u128, PROTOCOL_FEE_RATE_MUL_VALUE as u128, false)?;
-    // Deduct the CLP (Concentrated Liquidity Provider) reward incentive.
+    // Deduct the CLP (Concentrated Liquidity Provider) incentive.
     swap_fee -= try_mul_div(swap_fee, fusion_pool.clp_reward_rate as u128, MAX_CLP_REWARD_RATE as u128, false)?;
     // Add the order liquidity provider reward.
     amount_out += swap_fee;

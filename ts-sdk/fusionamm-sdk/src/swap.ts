@@ -10,7 +10,7 @@
 
 import type {
   Account,
-  Address,
+  Address, FetchAccountsConfig,
   GetAccountInfoApi,
   GetEpochInfoApi,
   GetMinimumBalanceForRentExemptionApi,
@@ -19,16 +19,16 @@ import type {
   Rpc,
   TransactionSigner,
 } from "@solana/kit";
-import {AccountRole, lamports} from "@solana/kit";
-import {FUNDER, SLIPPAGE_TOLERANCE_BPS} from "./config";
-import type {ExactInSwapQuote, ExactOutSwapQuote, TickArrayFacade, TransferFee} from "@crypticdot/fusionamm-core";
+import { AccountRole, lamports } from "@solana/kit";
+import { FUNDER, SLIPPAGE_TOLERANCE_BPS } from "./config";
+import type { ExactInSwapQuote, ExactOutSwapQuote, TickArrayFacade, TransferFee } from "@crypticdot/fusionamm-core";
 import {
   _TICK_ARRAY_SIZE,
   getTickArrayStartTickIndex,
   swapQuoteByInputToken,
   swapQuoteByOutputToken,
 } from "@crypticdot/fusionamm-core";
-import type {FusionPool} from "@crypticdot/fusionamm-client";
+import type { FusionPool } from "@crypticdot/fusionamm-client";
 import {
   AccountsType,
   fetchAllMaybeTickArray,
@@ -36,9 +36,9 @@ import {
   getSwapInstruction,
   getTickArrayAddress,
 } from "@crypticdot/fusionamm-client";
-import {getCurrentTransferFee, prepareTokenAccountsInstructions} from "./token";
-import {MEMO_PROGRAM_ADDRESS} from "@solana-program/memo";
-import {fetchAllMint} from "@solana-program/token-2022";
+import { getCurrentTransferFee, prepareTokenAccountsInstructions } from "./token";
+import { MEMO_PROGRAM_ADDRESS } from "@solana-program/memo";
+import { fetchAllMint } from "@solana-program/token-2022";
 
 // TODO: allow specify number as well as bigint
 // TODO: transfer hook
@@ -120,6 +120,7 @@ function createUninitializedTickArray(
 export async function fetchTickArrayOrDefault(
   rpc: Rpc<GetMultipleAccountsApi>,
   fusionPool: Account<FusionPool>,
+  config?: FetchAccountsConfig,
 ): Promise<Account<TickArrayFacade>[]> {
   const tickArrayStartIndex = getTickArrayStartTickIndex(fusionPool.data.tickCurrentIndex, fusionPool.data.tickSpacing);
   const offset = fusionPool.data.tickSpacing * _TICK_ARRAY_SIZE();
@@ -136,7 +137,7 @@ export async function fetchTickArrayOrDefault(
     tickArrayIndexes.map(startIndex => getTickArrayAddress(fusionPool.address, startIndex).then(x => x[0])),
   );
 
-  const maybeTickArrays = await fetchAllMaybeTickArray(rpc, tickArrayAddresses);
+  const maybeTickArrays = await fetchAllMaybeTickArray(rpc, tickArrayAddresses, config);
 
   const tickArrays: Account<TickArrayFacade>[] = [];
 
@@ -251,7 +252,7 @@ export async function swapInstructions<T extends SwapParams>(
   const maxInAmount = "tokenIn" in quote ? quote.tokenIn : quote.tokenMaxIn;
   const aToB = specifiedTokenA === specifiedInput;
 
-  const {createInstructions, cleanupInstructions, tokenAccountAddresses} = await prepareTokenAccountsInstructions(
+  const { createInstructions, cleanupInstructions, tokenAccountAddresses } = await prepareTokenAccountsInstructions(
     rpc,
     signer,
     {
@@ -288,13 +289,13 @@ export async function swapInstructions<T extends SwapParams>(
     amountSpecifiedIsInput: specifiedInput,
     aToB,
     remainingAccountsInfo: {
-      slices: [{accountsType: AccountsType.SupplementalTickArrays, length: 2}],
+      slices: [{ accountsType: AccountsType.SupplementalTickArrays, length: 2 }],
     },
   });
 
   swapInstruction.accounts.push(
-    {address: tickArrays[3].address, role: AccountRole.WRITABLE},
-    {address: tickArrays[4].address, role: AccountRole.WRITABLE},
+    { address: tickArrays[3].address, role: AccountRole.WRITABLE },
+    { address: tickArrays[4].address, role: AccountRole.WRITABLE },
   );
 
   instructions.push(swapInstruction);
