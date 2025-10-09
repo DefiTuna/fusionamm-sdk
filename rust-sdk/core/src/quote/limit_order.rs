@@ -30,16 +30,8 @@ pub fn limit_order_quote_by_input_token(
 ) -> Result<u64, CoreError> {
     let sqrt_price: u128 = tick_index_to_sqrt_price(tick_index).into();
     let mut amount_out = get_limit_order_output_amount(amount_in, a_to_b_order, sqrt_price, false)?;
-
-    // Total Output Amount = amount_out + reward = amount_out + swap_fee⋅(1 - order_protocol_fee_rate)⋅(1 - clp_reward_rate)
-    let mut swap_fee = try_reverse_apply_swap_fee(amount_out.into(), fusion_pool.fee_rate)? - amount_out;
-    // Deduct the order protocol fee from the total swap fee.
-    swap_fee -= try_mul_div(swap_fee, fusion_pool.order_protocol_fee_rate as u128, PROTOCOL_FEE_RATE_MUL_VALUE as u128, false)?;
-    // Deduct the CLP (Concentrated Liquidity Provider) incentive.
-    swap_fee -= try_mul_div(swap_fee, fusion_pool.clp_reward_rate as u128, MAX_CLP_REWARD_RATE as u128, false)?;
-    // Add the order liquidity provider reward.
-    amount_out += swap_fee;
-
+    amount_out +=
+        limit_order_reward_by_output_token(amount_out, fusion_pool.fee_rate, fusion_pool.order_protocol_fee_rate, fusion_pool.clp_reward_rate)?;
     Ok(amount_out)
 }
 
@@ -75,6 +67,28 @@ pub fn limit_order_quote_by_output_token(
     let amount_in = get_limit_order_output_amount(amount_out_with_fees as u64, !a_to_b_order, sqrt_price, true)?;
 
     Ok(amount_in)
+}
+
+/// Computes the limit order reward by input amount.
+/// ### Parameters
+/// - `amount_out` - The output token amount of a limit order (swap input).
+/// - `a_to_b_order` - The limit order direction.
+/// - `tick_index` - The tick index of an order.
+/// - `fusion_pool` - The fusion_pool state.
+#[cfg_attr(feature = "wasm", wasm_expose)]
+pub fn limit_order_reward_by_output_token(
+    amount_out: u64,
+    fee_rate: u16,
+    order_protocol_fee_rate: u16,
+    clp_reward_rate: u16,
+) -> Result<u64, CoreError> {
+    // Reward = swap_fee⋅(1 - order_protocol_fee_rate)⋅(1 - clp_reward_rate)
+    let swap_fee = try_reverse_apply_swap_fee(amount_out.into(), fee_rate)? - amount_out;
+    // Deduct the order protocol fee from the total swap fee.
+    let mut reward = swap_fee - try_mul_div(swap_fee, order_protocol_fee_rate as u128, PROTOCOL_FEE_RATE_MUL_VALUE as u128, false)?;
+    // Deduct the CLP (Concentrated Liquidity Provider) incentive.
+    reward -= try_mul_div(reward, clp_reward_rate as u128, MAX_CLP_REWARD_RATE as u128, false)?;
+    Ok(reward)
 }
 
 #[cfg_attr(feature = "wasm", wasm_expose)]

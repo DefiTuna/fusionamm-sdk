@@ -1,5 +1,11 @@
 # @crypticdot/fusionamm-rust-core
 
+## 1.0.65
+
+### Patch Changes
+
+- 9606b26: Added limit_order_reward_by_output_token()
+
 ## 1.0.64
 
 ## 1.0.63
