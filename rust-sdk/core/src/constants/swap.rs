@@ -20,12 +20,6 @@ pub const FEE_RATE_MUL_VALUE: u32 = 1_000_000;
 pub const MAX_PROTOCOL_FEE_RATE: u16 = 2_500;
 
 #[cfg_attr(feature = "wasm", wasm_expose)]
-pub const MAX_ORDER_PROTOCOL_FEE_RATE: u16 = 10_000;
-
-#[cfg_attr(feature = "wasm", wasm_expose)]
-pub const MAX_CLP_REWARD_RATE: u16 = 10_000;
-
-#[cfg_attr(feature = "wasm", wasm_expose)]
 pub const PROTOCOL_FEE_RATE_MUL_VALUE: u16 = 10_000;
 
 // TODO: WASM export (which doesn't work with u128 yet)

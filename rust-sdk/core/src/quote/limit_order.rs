@@ -9,7 +9,7 @@ use crate::math::get_limit_order_output_amount;
 use crate::{
     tick_index_to_sqrt_price, try_apply_transfer_fee, try_mul_div, try_reverse_apply_swap_fee, CoreError, FusionPoolFacade, LimitOrderDecreaseQuote,
     LimitOrderFacade, TickFacade, TransferFee, AMOUNT_EXCEEDS_LIMIT_ORDER_INPUT_AMOUNT, AMOUNT_EXCEEDS_MAX_U64, FEE_RATE_MUL_VALUE,
-    LIMIT_ORDER_AND_POOL_ARE_OUT_OF_SYNC, MAX_CLP_REWARD_RATE, PROTOCOL_FEE_RATE_MUL_VALUE,
+    LIMIT_ORDER_AND_POOL_ARE_OUT_OF_SYNC, PROTOCOL_FEE_RATE_MUL_VALUE,
 };
 
 #[cfg(feature = "wasm")]
@@ -30,8 +30,7 @@ pub fn limit_order_quote_by_input_token(
 ) -> Result<u64, CoreError> {
     let sqrt_price: u128 = tick_index_to_sqrt_price(tick_index).into();
     let mut amount_out = get_limit_order_output_amount(amount_in, a_to_b_order, sqrt_price, false)?;
-    amount_out +=
-        limit_order_reward_by_output_token(amount_out, fusion_pool.fee_rate, fusion_pool.order_protocol_fee_rate, fusion_pool.clp_reward_rate)?;
+    amount_out += limit_order_reward_by_output_token(amount_out, fusion_pool.fee_rate, fusion_pool.protocol_fee_rate)?;
     Ok(amount_out)
 }
 
@@ -51,13 +50,12 @@ pub fn limit_order_quote_by_output_token(
     let sqrt_price: u128 = tick_index_to_sqrt_price(tick_index).into();
 
     let f = fusion_pool.fee_rate as f64 / FEE_RATE_MUL_VALUE as f64;
-    let p = fusion_pool.order_protocol_fee_rate as f64 / PROTOCOL_FEE_RATE_MUL_VALUE as f64;
-    let r = fusion_pool.clp_reward_rate as f64 / MAX_CLP_REWARD_RATE as f64;
+    let p = fusion_pool.protocol_fee_rate as f64 / PROTOCOL_FEE_RATE_MUL_VALUE as f64;
 
     // Output amount without reward = O
-    // Limit order reward = R = swap_fee⋅(1-p)⋅(1-r) = O⋅f/(1-f)⋅(1-p)⋅(1-r)
-    // Output amount with fees = O' = O + R = O ⋅ (1 + f/(1-f)⋅(1-p)⋅(1-r))
-    let denominator = 1.0 + (f / (1.0 - f) * (1.0 - r) * (1.0 - p));
+    // Limit order reward = R = swap_fee⋅(1-p) = O⋅f/(1-f)⋅(1-p)
+    // Output amount with fees = O' = O + R = O ⋅ (1 + f/(1-f)⋅(1-p))
+    let denominator = 1.0 + (f / (1.0 - f) * (1.0 - p));
     let amount_out_with_fees = amount_out as f64 / denominator;
 
     if amount_out_with_fees < 0.0 || amount_out_with_fees > u64::MAX as f64 {
@@ -76,18 +74,11 @@ pub fn limit_order_quote_by_output_token(
 /// - `tick_index` - The tick index of an order.
 /// - `fusion_pool` - The fusion_pool state.
 #[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn limit_order_reward_by_output_token(
-    amount_out: u64,
-    fee_rate: u16,
-    order_protocol_fee_rate: u16,
-    clp_reward_rate: u16,
-) -> Result<u64, CoreError> {
-    // Reward = swap_fee⋅(1 - order_protocol_fee_rate)⋅(1 - clp_reward_rate)
+pub fn limit_order_reward_by_output_token(amount_out: u64, fee_rate: u16, protocol_fee_rate: u16) -> Result<u64, CoreError> {
+    // Reward = swap_fee⋅(1 - protocol_fee_rate)
     let swap_fee = try_reverse_apply_swap_fee(amount_out.into(), fee_rate)? - amount_out;
-    // Deduct the order protocol fee from the total swap fee.
-    let mut reward = swap_fee - try_mul_div(swap_fee, order_protocol_fee_rate as u128, PROTOCOL_FEE_RATE_MUL_VALUE as u128, false)?;
-    // Deduct the CLP (Concentrated Liquidity Provider) incentive.
-    reward -= try_mul_div(reward, clp_reward_rate as u128, MAX_CLP_REWARD_RATE as u128, false)?;
+    // Deduct the protocol fee from the total swap fee.
+    let reward = swap_fee - try_mul_div(swap_fee, protocol_fee_rate as u128, PROTOCOL_FEE_RATE_MUL_VALUE as u128, false)?;
     Ok(reward)
 }
 
@@ -173,19 +164,17 @@ pub fn decrease_limit_order_quote(
 mod tests {
     use crate::{
         decrease_limit_order_quote, limit_order_quote_by_input_token, limit_order_quote_by_output_token, price_to_tick_index,
-        sqrt_price_to_tick_index, FusionPoolFacade, LimitOrderFacade, TickFacade, MAX_CLP_REWARD_RATE,
+        sqrt_price_to_tick_index, FusionPoolFacade, LimitOrderFacade, TickFacade,
     };
-    const FIFTY_PCT: u16 = 5000;
+    const TEN_PCT: u16 = 1000;
     const ONE_PCT_FEE_RATE: u16 = 10000;
 
-    fn test_fusion_pool(sqrt_price: u128, fee_rate: u16, clp_reward_rate: u16, order_protocol_fee_rate: u16) -> FusionPoolFacade {
+    fn test_fusion_pool(sqrt_price: u128, fee_rate: u16, protocol_fee_rate: u16) -> FusionPoolFacade {
         let tick_current_index = sqrt_price_to_tick_index(sqrt_price);
         FusionPoolFacade {
             tick_current_index,
             fee_rate,
-            clp_reward_rate,
-            order_protocol_fee_rate,
-            protocol_fee_rate: 0,
+            protocol_fee_rate,
             sqrt_price,
             tick_spacing: 2,
             ..FusionPoolFacade::default()
@@ -197,7 +186,6 @@ mod tests {
     fn partially_decrease_not_filled_a_to_b_order() {
         let quote = decrease_limit_order_quote(
             FusionPoolFacade {
-                order_protocol_fee_rate: FIFTY_PCT,
                 ..FusionPoolFacade::default()
             },
             LimitOrderFacade {
@@ -230,7 +218,7 @@ mod tests {
     fn partially_decrease_semi_filled_a_to_b_order() {
         let quote = decrease_limit_order_quote(
             FusionPoolFacade {
-                order_protocol_fee_rate: FIFTY_PCT,
+                protocol_fee_rate: TEN_PCT,
                 orders_filled_amount_a: 80_000,
                 olp_fee_owed_b: 500,
                 ..FusionPoolFacade::default()
@@ -267,7 +255,7 @@ mod tests {
     fn partially_decrease_semi_filled_b_to_a_order() {
         let quote = decrease_limit_order_quote(
             FusionPoolFacade {
-                order_protocol_fee_rate: FIFTY_PCT,
+                protocol_fee_rate: TEN_PCT,
                 orders_filled_amount_b: 80_000,
                 olp_fee_owed_a: 500,
                 ..FusionPoolFacade::default()
@@ -304,7 +292,7 @@ mod tests {
     fn partially_decrease_fulfilled_a_to_b() {
         let quote = decrease_limit_order_quote(
             FusionPoolFacade {
-                order_protocol_fee_rate: FIFTY_PCT,
+                protocol_fee_rate: TEN_PCT,
                 orders_filled_amount_a: 100_000,
                 olp_fee_owed_b: 500,
                 ..FusionPoolFacade::default()
@@ -341,7 +329,7 @@ mod tests {
     fn partially_decrease_fulfilled_b_to_a() {
         let quote = decrease_limit_order_quote(
             FusionPoolFacade {
-                order_protocol_fee_rate: FIFTY_PCT,
+                protocol_fee_rate: TEN_PCT,
                 orders_filled_amount_b: 80_000,
                 olp_fee_owed_a: 500,
                 ..FusionPoolFacade::default()
@@ -377,39 +365,21 @@ mod tests {
     fn test_limit_order_quote_by_input_token() {
         // zero swap fee
         assert_eq!(
-            limit_order_quote_by_input_token(10_000, true, price_to_tick_index(2.0, 1, 1), test_fusion_pool(1 << 64, 0, 0, FIFTY_PCT)).unwrap(),
+            limit_order_quote_by_input_token(10_000, true, price_to_tick_index(2.0, 1, 1), test_fusion_pool(1 << 64, 0, 0)).unwrap(),
             19998
         );
 
         // 1% swap fee
         assert_eq!(
-            limit_order_quote_by_input_token(10_000, true, price_to_tick_index(2.0, 1, 1), test_fusion_pool(1 << 64, ONE_PCT_FEE_RATE, 0, 0))
-                .unwrap(),
+            limit_order_quote_by_input_token(10_000, true, price_to_tick_index(2.0, 1, 1), test_fusion_pool(1 << 64, ONE_PCT_FEE_RATE, 0)).unwrap(),
             20200
         );
 
-        // 1% swap fee, clp_reward_rate = 50%
+        // 1% swap fee, protocol_fee = 10%
         assert_eq!(
-            limit_order_quote_by_input_token(
-                10_000,
-                true,
-                price_to_tick_index(2.0, 1, 1),
-                test_fusion_pool(1 << 64, ONE_PCT_FEE_RATE, MAX_CLP_REWARD_RATE / 2, 0)
-            )
-            .unwrap(),
-            20099
-        );
-
-        // 1% swap fee, clp_reward_rate = 50%, order_protocol_fee = 50%
-        assert_eq!(
-            limit_order_quote_by_input_token(
-                10_000,
-                true,
-                price_to_tick_index(2.0, 1, 1),
-                test_fusion_pool(1 << 64, ONE_PCT_FEE_RATE, MAX_CLP_REWARD_RATE / 2, FIFTY_PCT)
-            )
-            .unwrap(),
-            20049
+            limit_order_quote_by_input_token(10_000, true, price_to_tick_index(2.0, 1, 1), test_fusion_pool(1 << 64, ONE_PCT_FEE_RATE, TEN_PCT))
+                .unwrap(),
+            20180
         );
     }
 
@@ -417,38 +387,20 @@ mod tests {
     fn test_limit_order_quote_by_output_token() {
         // zero swap fee
         assert_eq!(
-            limit_order_quote_by_output_token(19998, true, price_to_tick_index(2.0, 1, 1), test_fusion_pool(1 << 64, 0, 0, FIFTY_PCT)).unwrap(),
+            limit_order_quote_by_output_token(19998, true, price_to_tick_index(2.0, 1, 1), test_fusion_pool(1 << 64, 0, TEN_PCT)).unwrap(),
             10_000
         );
 
         // 1% swap fee
         assert_eq!(
-            limit_order_quote_by_output_token(20200, true, price_to_tick_index(2.0, 1, 1), test_fusion_pool(1 << 64, ONE_PCT_FEE_RATE, 0, 0))
+            limit_order_quote_by_output_token(20200, true, price_to_tick_index(2.0, 1, 1), test_fusion_pool(1 << 64, ONE_PCT_FEE_RATE, 0)).unwrap(),
+            10_000
+        );
+
+        // 1% swap fee, protocol_fee = 10%
+        assert_eq!(
+            limit_order_quote_by_output_token(20180, true, price_to_tick_index(2.0, 1, 1), test_fusion_pool(1 << 64, ONE_PCT_FEE_RATE, TEN_PCT))
                 .unwrap(),
-            10_000
-        );
-
-        // 1% swap fee, clp_reward_rate = 50%
-        assert_eq!(
-            limit_order_quote_by_output_token(
-                20099,
-                true,
-                price_to_tick_index(2.0, 1, 1),
-                test_fusion_pool(1 << 64, ONE_PCT_FEE_RATE, MAX_CLP_REWARD_RATE / 2, 0)
-            )
-            .unwrap(),
-            10_000
-        );
-
-        // 1% swap fee, clp_reward_rate = 50%, order_protocol_fee = 50%
-        assert_eq!(
-            limit_order_quote_by_output_token(
-                20049,
-                true,
-                price_to_tick_index(2.0, 1, 1),
-                test_fusion_pool(1 << 64, ONE_PCT_FEE_RATE, MAX_CLP_REWARD_RATE / 2, FIFTY_PCT)
-            )
-            .unwrap(),
             10_000
         );
     }

@@ -14,7 +14,7 @@ use fusionamm_macros::wasm_expose;
 
 use crate::{
     try_apply_transfer_fee, CollectFeesQuote, CoreError, FusionPoolFacade, PositionFacade, TickFacade, TransferFee, AMOUNT_EXCEEDS_MAX_U64,
-    ARITHMETIC_OVERFLOW, MAX_CLP_REWARD_RATE, MAX_ORDER_PROTOCOL_FEE_RATE,
+    ARITHMETIC_OVERFLOW, PROTOCOL_FEE_RATE_MUL_VALUE,
 };
 
 /// Calculate fees owed for a position
@@ -92,10 +92,8 @@ pub fn collect_fees_quote(
 
 #[cfg_attr(feature = "wasm", wasm_expose)]
 pub fn limit_order_fee(fusion_pool: FusionPoolFacade) -> i32 {
-    let fee = fusion_pool.fee_rate as u64 * (MAX_ORDER_PROTOCOL_FEE_RATE as u64 - fusion_pool.order_protocol_fee_rate as u64)
-        / MAX_ORDER_PROTOCOL_FEE_RATE as u64
-        * (MAX_CLP_REWARD_RATE as u64 - fusion_pool.clp_reward_rate as u64)
-        / MAX_CLP_REWARD_RATE as u64;
+    let fee = fusion_pool.fee_rate as u64 * (PROTOCOL_FEE_RATE_MUL_VALUE as u64 - fusion_pool.protocol_fee_rate as u64)
+        / PROTOCOL_FEE_RATE_MUL_VALUE as u64;
     -(fee as i32)
 }
 
@@ -222,10 +220,9 @@ mod tests {
     fn test_limit_order_fee() {
         let result = limit_order_fee(FusionPoolFacade {
             fee_rate: 10000,
-            order_protocol_fee_rate: MAX_ORDER_PROTOCOL_FEE_RATE / 2,
-            clp_reward_rate: MAX_CLP_REWARD_RATE / 2,
+            protocol_fee_rate: 1000,
             ..FusionPoolFacade::default()
         });
-        assert_eq!(result, -2500);
+        assert_eq!(result, -9000);
     }
 }

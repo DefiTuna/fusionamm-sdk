@@ -16,19 +16,6 @@ export default class InitializeConfig extends BaseCommand {
       min: 0,
       max: 2500,
     }),
-    defaultOrderProtocolFeeRate: Args.integer({
-      description: "Limit order fee rate stored as basis points. The maximum value of 10000 equals to 100%",
-      required: true,
-      min: 0,
-      max: 10000,
-    }),
-    defaultClpRewardRate: Args.integer({
-      description:
-        "The reward rate for concentrated liquidity providers stored as basis points. The maximum value 10_000 equals to 100%",
-      required: true,
-      min: 0,
-      max: 10000,
-    }),
   };
 
   static override flags = {
@@ -55,8 +42,6 @@ export default class InitializeConfig extends BaseCommand {
       feeAuthority: flags.feeAuthority ?? defaultAuthority,
       tokenBadgeAuthority: flags.tokenBadgeAuthority ?? defaultAuthority,
       defaultProtocolFeeRate: args.defaultProtocolFeeRate,
-      defaultOrderProtocolFeeRate: args.defaultOrderProtocolFeeRate,
-      defaultClpRewardRate: args.defaultClpRewardRate,
     });
 
     console.log("");

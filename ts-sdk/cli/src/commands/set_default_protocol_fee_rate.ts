@@ -18,7 +18,7 @@ export default class SetDefaultProtocolFeeRate extends BaseCommand {
     }),
   };
   static override description = "Set the default protocol fee rate";
-  static override examples = ["<%= config.bin %> <%= command.id %> address 100"];
+  static override examples = ["<%= config.bin %> <%= command.id %> 100"];
 
   public async run() {
     const { args } = await this.parse(SetDefaultProtocolFeeRate);

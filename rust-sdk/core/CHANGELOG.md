@@ -1,5 +1,11 @@
 # @crypticdot/fusionamm-rust-core
 
+## 1.0.66
+
+### Patch Changes
+
+- 3020148: Simplified limit order rewards calculation math
+
 ## 1.0.65
 
 ### Patch Changes

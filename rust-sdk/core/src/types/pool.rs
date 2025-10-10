@@ -19,8 +19,6 @@ pub struct FusionPoolFacade {
     pub tick_spacing: u16,
     pub fee_rate: u16,
     pub protocol_fee_rate: u16,
-    pub clp_reward_rate: u16,
-    pub order_protocol_fee_rate: u16,
     pub liquidity: u128,
     pub sqrt_price: u128,
     pub tick_current_index: i32,

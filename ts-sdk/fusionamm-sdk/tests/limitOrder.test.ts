@@ -25,7 +25,7 @@ import {
   fetchLimitOrder,
   fetchTickArray,
   FusionPool, getFusionPoolsConfigAddress,
-  getLimitOrderAddress, getSetClpRewardRateInstruction, getSetOrderProtocolFeeRateInstruction,
+  getLimitOrderAddress,
   getTickArrayAddress,
 } from "@crypticdot/fusionamm-client";
 import { fetchAllMint, fetchMint, fetchToken } from "@solana-program/token-2022";
@@ -255,15 +255,15 @@ describe("Limit Orders", () => {
       await testSwapExactInput({ poolAddress, inputAmount: 1_000_000n, mint: mintBAddress });
 
       fusionPool = await fetchFusionPool(rpc, poolAddress);
-      expect(fusionPool.data.protocolFeeOwedA).toEqual(750n);
-      expect(fusionPool.data.protocolFeeOwedB).toEqual(poolName == "A-TEFee" ? 741n : 750n);
+      expect(fusionPool.data.protocolFeeOwedA).toEqual(11n);
+      expect(fusionPool.data.protocolFeeOwedB).toEqual(poolName == "A-TEFee" ? 11n : 13n);
       expect(fusionPool.data.ordersTotalAmountA).toEqual(8000000n);
       expect(fusionPool.data.ordersTotalAmountB).toEqual(8000000n);
 
       expect(fusionPool.data.ordersFilledAmountA).toEqual(poolName == "A-TEFee" ? 4380687n : 4422472n);
       expect(fusionPool.data.ordersFilledAmountB).toEqual(4876385n);
-      expect(fusionPool.data.olpFeeOwedA).toEqual(754n);
-      expect(fusionPool.data.olpFeeOwedB).toEqual(poolName == "A-TEFee" ? 746n : 753n);
+      expect(fusionPool.data.olpFeeOwedA).toEqual(1493n);
+      expect(fusionPool.data.olpFeeOwedB).toEqual(poolName == "A-TEFee" ? 1476n : 1490n);
 
       for (const order of orders) {
         await testCloseLimitOrder({
@@ -272,8 +272,8 @@ describe("Limit Orders", () => {
       }
 
       fusionPool = await fetchFusionPool(rpc, poolAddress);
-      expect(fusionPool.data.protocolFeeOwedA).toEqual(750n);
-      expect(fusionPool.data.protocolFeeOwedB).toEqual(poolName == "A-TEFee" ? 741n : 750n);
+      expect(fusionPool.data.protocolFeeOwedA).toEqual(11n);
+      expect(fusionPool.data.protocolFeeOwedB).toEqual(poolName == "A-TEFee" ? 11n : 13n);
       expect(fusionPool.data.ordersTotalAmountA).toEqual(0n);
       expect(fusionPool.data.ordersTotalAmountB).toEqual(0n);
       expect(fusionPool.data.ordersFilledAmountA).toEqual(0n);
@@ -390,23 +390,6 @@ describe("Limit Orders", () => {
     const ataBAddress = await setupAtaB(mintBAddress, { amount: 100_000_000n });
     const poolAddress = await setupFusionPool(mintAAddress, mintBAddress, tickSpacing);
 
-    await sendTransaction(
-      [
-        getSetClpRewardRateInstruction({
-          clpRewardRate: 3000,
-          feeAuthority: signer,
-          fusionPool: poolAddress,
-          fusionPoolsConfig: (await getFusionPoolsConfigAddress())[0],
-        }),
-        getSetOrderProtocolFeeRateInstruction({
-          orderProtocolFeeRate: 3000,
-          feeAuthority: signer,
-          fusionPool: poolAddress,
-          fusionPoolsConfig: (await getFusionPoolsConfigAddress())[0],
-        }),
-      ],
-    );
-
     const limitOrdersArgs = [
       { amount: 1_000_000n, priceOffset: -0.06, aToB: false }, // 1st
       { amount: 1_000_000n, priceOffset: -0.1, aToB: false }, // 2nd
@@ -431,9 +414,9 @@ describe("Limit Orders", () => {
 
     // Quote the limit order output
     const quotedAmountOut = limitOrderQuoteByInputToken(orders[0].data.amount, orders[0].data.aToB, orders[0].data.tickIndex, fusionPool.data);
-    // The actual limit order output will be 1066247n.
+    // The actual limit order output will be 1066409.
     // It happens because the quote function has different math. A small error is fine.
-    expect(quotedAmountOut).toEqual(1066245n);
+    expect(quotedAmountOut).toEqual(1066405n);
 
     // The 1st order will be fulfilled.
     await testSwapExactInput({ poolAddress, inputAmount: 1_500_000n, mint: mintAAddress });
@@ -446,7 +429,7 @@ describe("Limit Orders", () => {
     // Decrease Limit Order Quote
     const tick = tickArray.data.ticks[(limitOrder.tickIndex - startTickIndex) / fusionPool.data.tickSpacing];
     const decreaseQuote = decreaseLimitOrderQuote(fusionPool.data, limitOrder, tick, limitOrder.amount);
-    expect(decreaseQuote.amountOutA).toEqual(1066247n);
+    expect(decreaseQuote.amountOutA).toEqual(1066409n);
     expect(decreaseQuote.amountOutB).toEqual(0n);
 
     // Execute the decrease order instruction
@@ -457,7 +440,7 @@ describe("Limit Orders", () => {
     });
     const tokenAfterA = await fetchToken(rpc, ataAAddress);
     const tokenAfterB = await fetchToken(rpc, ataBAddress);
-    expect(tokenAfterA.data.amount - tokenBeforeA.data.amount).toEqual(1066247n);
+    expect(tokenAfterA.data.amount - tokenBeforeA.data.amount).toEqual(1066409n);
     expect(tokenAfterB.data.amount - tokenBeforeB.data.amount).toEqual(0n);
   });
 });

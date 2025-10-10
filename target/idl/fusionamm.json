@@ -2,7 +2,7 @@
   "address": "fUSioN9YKKSa3CUC2YUc4tPkHJ5Y6XW1yz8y6F7qWz9",
   "metadata": {
     "name": "fusionamm",
-    "version": "1.0.12",
+    "version": "1.0.14",
     "spec": "0.1.0"
   },
   "instructions": [
@@ -823,14 +823,6 @@
         {
           "name": "default_protocol_fee_rate",
           "type": "u16"
-        },
-        {
-          "name": "default_order_protocol_fee_rate",
-          "type": "u16"
-        },
-        {
-          "name": "default_clp_reward_rate",
-          "type": "u16"
         }
       ]
     },
@@ -840,8 +832,8 @@
         "Initializes a FusionPool account.",
         "",
         "### Parameters",
-        "- `bumps` - The bump value when deriving the PDA of the FusionPool address.",
         "- `tick_spacing` - The desired tick spacing for this pool.",
+        "- `fee_rate` - The desired fee rate for this pool.",
         "- `initial_sqrt_price` - The desired initial sqrt-price for this pool",
         "",
         "#### Special Errors",
@@ -1410,51 +1402,6 @@
       ]
     },
     {
-      "name": "set_clp_reward_rate",
-      "docs": [
-        "Sets the reward rate for concentrated liquidity providers, generated from limit order swaps.",
-        "Only the current fee authority has permission to invoke this instruction.",
-        "",
-        "### Authority",
-        "- \"fee_authority\" - Set authority that can modify pool fees in the FusionPoolConfig",
-        "",
-        "### Parameters",
-        "- `clp_reward_rate` - The default reward ratio of concentrated liquidity providers to limit orders' liquidity providers",
-        "",
-        "#### Special Errors",
-        "- `ClpRewardRateMaxExceeded` - If the provided clp_reward_rate exceeds MAX_CLP_REWARD_RATE."
-      ],
-      "discriminator": [
-        76,
-        80,
-        236,
-        123,
-        252,
-        215,
-        183,
-        23
-      ],
-      "accounts": [
-        {
-          "name": "fusion_pools_config"
-        },
-        {
-          "name": "fusion_pool",
-          "writable": true
-        },
-        {
-          "name": "fee_authority",
-          "signer": true
-        }
-      ],
-      "args": [
-        {
-          "name": "clp_reward_rate",
-          "type": "u16"
-        }
-      ]
-    },
-    {
       "name": "set_collect_protocol_fees_authority",
       "docs": [
         "Sets the fee authority to collect protocol fees for a FusionPoolConfig.",
@@ -1487,92 +1434,6 @@
         }
       ],
       "args": []
-    },
-    {
-      "name": "set_default_clp_reward_rate",
-      "docs": [
-        "Sets the default reward rate for concentrated liquidity providers, generated from limit order swaps.",
-        "The rate is represented as basis point. (10000 = 100%)",
-        "Only the current fee authority has permission to invoke this instruction.",
-        "",
-        "### Authority",
-        "- \"fee_authority\" - Set authority that can modify pool fees in the FusionPoolConfig",
-        "",
-        "### Parameters",
-        "- `default_clp_reward_rate` - The default reward ratio of concentrated liquidity providers to limit orders' liquidity providers",
-        "",
-        "#### Special Errors",
-        "- `ClpRewardRateMaxExceeded` - If the provided default_clp_reward_rate exceeds MAX_CLP_REWARD_RATE."
-      ],
-      "discriminator": [
-        149,
-        56,
-        50,
-        228,
-        161,
-        26,
-        122,
-        145
-      ],
-      "accounts": [
-        {
-          "name": "fusion_pools_config",
-          "writable": true
-        },
-        {
-          "name": "fee_authority",
-          "signer": true
-        }
-      ],
-      "args": [
-        {
-          "name": "default_clp_reward_rate",
-          "type": "u16"
-        }
-      ]
-    },
-    {
-      "name": "set_default_order_protocol_fee_rate",
-      "docs": [
-        "Sets the default limit order protocol fee rate for a FusionPoolConfig",
-        "Protocol fee rate is represented as hundredths of a basis point.",
-        "Only the current fee authority has permission to invoke this instruction.",
-        "",
-        "### Authority",
-        "- \"fee_authority\" - Set authority that can modify pool fees in the FusionPoolConfig",
-        "",
-        "### Parameters",
-        "- `default_order_protocol_fee_rate` - Rate that is referenced during the initialization of a FusionPool using this config.",
-        "",
-        "#### Special Errors",
-        "- `ProtocolFeeRateMaxExceeded` - If the provided default_protocol_fee_rate exceeds MAX_FEE_RATE."
-      ],
-      "discriminator": [
-        60,
-        183,
-        119,
-        187,
-        211,
-        51,
-        66,
-        236
-      ],
-      "accounts": [
-        {
-          "name": "fusion_pools_config",
-          "writable": true
-        },
-        {
-          "name": "fee_authority",
-          "signer": true
-        }
-      ],
-      "args": [
-        {
-          "name": "default_order_protocol_fee_rate",
-          "type": "u16"
-        }
-      ]
     },
     {
       "name": "set_default_protocol_fee_rate",
@@ -1700,52 +1561,6 @@
       ]
     },
     {
-      "name": "set_order_protocol_fee_rate",
-      "docs": [
-        "Sets the limit order protocol fee rate for a FusionPool.",
-        "Protocol fee rate is represented as hundredths of a basis point.",
-        "Only the current fee authority has permission to invoke this instruction.",
-        "",
-        "### Authority",
-        "- \"fee_authority\" - Set authority that can modify pool fees in the FusionPoolConfig",
-        "",
-        "### Parameters",
-        "- `order_protocol_fee_rate` - The rate that the pool will use to calculate protocol fees going onwards.",
-        "",
-        "#### Special Errors",
-        "- `ProtocolFeeRateMaxExceeded` - If the provided default_protocol_fee_rate exceeds MAX_PROTOCOL_FEE_RATE."
-      ],
-      "discriminator": [
-        206,
-        150,
-        209,
-        147,
-        10,
-        122,
-        208,
-        166
-      ],
-      "accounts": [
-        {
-          "name": "fusion_pools_config"
-        },
-        {
-          "name": "fusion_pool",
-          "writable": true
-        },
-        {
-          "name": "fee_authority",
-          "signer": true
-        }
-      ],
-      "args": [
-        {
-          "name": "order_protocol_fee_rate",
-          "type": "u16"
-        }
-      ]
-    },
-    {
       "name": "set_position_range",
       "docs": [
         "Set the position range to a new one.",
@@ -1855,7 +1670,8 @@
       ],
       "accounts": [
         {
-          "name": "fusion_pools_config"
+          "name": "fusion_pools_config",
+          "writable": true
         },
         {
           "name": "fee_authority",
@@ -2415,8 +2231,8 @@
     },
     {
       "code": 6026,
-      "name": "ClpRewardRateMaxExceeded",
-      "msg": "Exceeded reward ratio of concentrated liquidity providers to limit orders' liquidity providers"
+      "name": "Unused",
+      "msg": "Unused"
     },
     {
       "code": 6027,
@@ -2693,12 +2509,8 @@
             "type": "u16"
           },
           {
-            "name": "clp_reward_rate",
-            "type": "u16"
-          },
-          {
-            "name": "order_protocol_fee_rate",
-            "type": "u16"
+            "name": "unused_0",
+            "type": "u32"
           },
           {
             "name": "liquidity",
@@ -2798,11 +2610,11 @@
             "type": "u16"
           },
           {
-            "name": "default_order_protocol_fee_rate",
+            "name": "unused_0",
             "type": "u16"
           },
           {
-            "name": "default_clp_reward_rate",
+            "name": "unused_1",
             "type": "u16"
           },
           {

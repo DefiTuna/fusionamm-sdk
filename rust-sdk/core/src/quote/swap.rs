@@ -492,7 +492,6 @@ mod tests {
         FusionPoolFacade {
             tick_current_index,
             fee_rate: 10000,
-            order_protocol_fee_rate: 10000,
             protocol_fee_rate: 1000,
             liquidity: 0,
             sqrt_price,
