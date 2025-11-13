@@ -1,5 +1,9 @@
 # @crypticdot/fusionamm-rust
 
+## 1.0.68
+
+## 1.0.67
+
 ## 1.0.66
 
 ## 1.0.65

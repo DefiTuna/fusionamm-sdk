@@ -46,17 +46,17 @@ impl Debug for TickArrays {
 }
 
 #[cfg(feature = "wasm")]
-impl From<TickArrays> for [Option<TickArrayFacade>; 6] {
+impl From<TickArrays> for Vec<TickArrayFacade> {
     fn from(val: TickArrays) -> Self {
         let val = JsValue::from(val);
         if !val.is_array() {
-            return [None, None, None, None, None, None];
+            return vec![];
         }
         let array: Array = val.unchecked_into();
-        let mut result = [None, None, None, None, None, None];
+        let mut result = vec![];
         for (i, item) in array.iter().enumerate() {
             if let Ok(item) = serde_wasm_bindgen::from_value(item) {
-                result[i] = Some(item);
+                result.push(item);
             }
         }
         result
@@ -64,33 +64,27 @@ impl From<TickArrays> for [Option<TickArrayFacade>; 6] {
 }
 
 #[cfg(not(feature = "wasm"))]
-impl From<TickArrays> for [Option<TickArrayFacade>; 6] {
+impl From<TickArrays> for Vec<TickArrayFacade> {
     fn from(val: TickArrays) -> Self {
         match val {
-            TickArrays::One(tick_array) => [Some(tick_array), None, None, None, None, None],
-            TickArrays::Two(tick_array_1, tick_array_2) => [Some(tick_array_1), Some(tick_array_2), None, None, None, None],
+            TickArrays::One(tick_array) => {
+                vec![tick_array]
+            }
+            TickArrays::Two(tick_array_1, tick_array_2) => {
+                vec![tick_array_1, tick_array_2]
+            }
             TickArrays::Three(tick_array_1, tick_array_2, tick_array_3) => {
-                [Some(tick_array_1), Some(tick_array_2), Some(tick_array_3), None, None, None]
+                vec![tick_array_1, tick_array_2, tick_array_3]
             }
             TickArrays::Four(tick_array_1, tick_array_2, tick_array_3, tick_array_4) => {
-                [Some(tick_array_1), Some(tick_array_2), Some(tick_array_3), Some(tick_array_4), None, None]
+                vec![tick_array_1, tick_array_2, tick_array_3, tick_array_4]
             }
-            TickArrays::Five(tick_array_1, tick_array_2, tick_array_3, tick_array_4, tick_array_5) => [
-                Some(tick_array_1),
-                Some(tick_array_2),
-                Some(tick_array_3),
-                Some(tick_array_4),
-                Some(tick_array_5),
-                None,
-            ],
-            TickArrays::Six(tick_array_1, tick_array_2, tick_array_3, tick_array_4, tick_array_5, tick_array_6) => [
-                Some(tick_array_1),
-                Some(tick_array_2),
-                Some(tick_array_3),
-                Some(tick_array_4),
-                Some(tick_array_5),
-                Some(tick_array_6),
-            ],
+            TickArrays::Five(tick_array_1, tick_array_2, tick_array_3, tick_array_4, tick_array_5) => {
+                vec![tick_array_1, tick_array_2, tick_array_3, tick_array_4, tick_array_5]
+            }
+            TickArrays::Six(tick_array_1, tick_array_2, tick_array_3, tick_array_4, tick_array_5, tick_array_6) => {
+                vec![tick_array_1, tick_array_2, tick_array_3, tick_array_4, tick_array_5, tick_array_6]
+            }
         }
     }
 }

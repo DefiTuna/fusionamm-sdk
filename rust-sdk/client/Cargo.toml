@@ -35,7 +35,7 @@ solana-cpi = { version = "^2.2" }
 solana-account-info = { version = "^2.2" }
 
 # Anchor
-anchor-lang = { version = ">=0.28, <0.32", optional = true }
+anchor-lang = { version = ">=0.28, <0.33", optional = true }
 
 # Other dependencies
 borsh = { version = "^0.10" }

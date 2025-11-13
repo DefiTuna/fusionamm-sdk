@@ -12,8 +12,7 @@ mod bundle;
 mod limit_order;
 mod position;
 mod tick;
-mod tick_array;
-mod tick_array_sequence_vec;
+mod tick_array_sequence;
 mod token;
 mod u256_math;
 
@@ -24,8 +23,7 @@ pub use bundle::*;
 pub use limit_order::*;
 pub use position::*;
 pub use tick::*;
-pub use tick_array::*;
-pub use tick_array_sequence_vec::*;
+pub use tick_array_sequence::*;
 pub use token::*;
 pub use u256_math::*;
 

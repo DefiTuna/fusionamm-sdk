@@ -157,11 +157,11 @@ pub struct SwapResult {
 /// # Notes
 /// - This function doesn't take into account slippage tolerance.
 /// - This function doesn't take into account transfer fee extension.
-pub fn compute_swap<const SIZE: usize>(
+pub fn compute_swap(
     token_amount: u64,
     sqrt_price_limit: u128,
     fusion_pool: FusionPoolFacade,
-    tick_sequence: TickArraySequence<SIZE>,
+    tick_sequence: TickArraySequence,
     a_to_b: bool,
     specified_input: bool,
 ) -> Result<SwapResult, CoreError> {
@@ -283,7 +283,7 @@ pub fn compute_swap<const SIZE: usize>(
     })
 }
 
-pub(crate) fn get_next_liquidity(current_liquidity: u128, next_tick: Option<&TickFacade>, a_to_b: bool) -> u128 {
+pub(crate) fn get_next_liquidity(current_liquidity: u128, next_tick: Option<TickFacade>, a_to_b: bool) -> u128 {
     let liquidity_net = next_tick.map(|tick| tick.liquidity_net).unwrap_or(0);
     let liquidity_net_unsigned = liquidity_net.unsigned_abs();
     if a_to_b {
@@ -309,7 +309,7 @@ pub struct LimitSwapComputation {
 }
 
 fn fill_limit_orders(
-    tick: Option<&TickFacade>,
+    tick: Option<TickFacade>,
     sqrt_price: u128,
     a_to_b: bool,
     amount_specified_is_input: bool,

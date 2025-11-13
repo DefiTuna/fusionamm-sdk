@@ -1,5 +1,13 @@
 # @crypticdot/fusionamm-rust-core
 
+## 1.0.68
+
+### Patch Changes
+
+- ef0888b: Got rid of TickArraySequence and renamed the optimized TickArraySequenceVec to TickArraySequence
+
+## 1.0.67
+
 ## 1.0.66
 
 ### Patch Changes

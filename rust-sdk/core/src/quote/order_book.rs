@@ -8,7 +8,7 @@
 use crate::quote::get_next_liquidity;
 use crate::{
     get_limit_order_output_amount, price_to_sqrt_price, sqrt_price_to_price, tick_index_to_sqrt_price, CoreError, FusionPoolFacade,
-    TickArraySequenceVec, MAX_SQRT_PRICE, MIN_SQRT_PRICE,
+    TickArraySequence, MAX_SQRT_PRICE, MIN_SQRT_PRICE,
 };
 
 #[derive(Debug)]
@@ -43,7 +43,7 @@ pub struct OrderBookEntry {
 /// - Order book entries for one side of the order book.
 pub fn get_order_book_side(
     fusion_pool: &FusionPoolFacade,
-    tick_sequence: &TickArraySequenceVec,
+    tick_sequence: &TickArraySequence,
     price_step: f64,
     max_num_entries: u32,
     invert_price: bool,
@@ -172,7 +172,7 @@ pub fn get_order_book_side(
                     limit_total_quote += swap_out;
                 }
 
-                current_liquidity = get_next_liquidity(current_liquidity, next_tick.as_ref(), a_to_b);
+                current_liquidity = get_next_liquidity(current_liquidity, next_tick, a_to_b);
                 current_tick_index = if a_to_b { next_tick_index - 1 } else { next_tick_index }
             }
         }
@@ -212,7 +212,7 @@ pub fn try_get_amount_delta_a_and_b(sqrt_price_1_x64: u128, sqrt_price_2_x64: u1
 mod order_book_tests {
     use crate::{
         get_order_book_side, increase_liquidity_quote_a, increase_liquidity_quote_b, price_to_sqrt_price, sqrt_price_to_tick_index, FusionPoolFacade,
-        TickArrayFacade, TickArraySequenceVec, TickFacade, TICK_ARRAY_SIZE,
+        TickArrayFacade, TickArraySequence, TickFacade, TICK_ARRAY_SIZE,
     };
 
     fn test_fusion_pool(sqrt_price: u128) -> FusionPoolFacade {
@@ -283,7 +283,7 @@ mod order_book_tests {
         tick_arrays[4].ticks[87].open_orders_input = 100_000;
         tick_arrays[4].ticks[87].part_filled_orders_remaining_input = 100_000;
         tick_arrays[4].ticks[87].initialized = true;
-        let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
+        let tick_sequence = TickArraySequence::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
         let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 8, false, 6, 6).unwrap();
 
@@ -351,7 +351,7 @@ mod order_book_tests {
         tick_arrays[3].ticks[62].liquidity_net = -(result.liquidity_delta as i128);
         tick_arrays[4].ticks[87].open_orders_input = 100_000;
         tick_arrays[4].ticks[87].part_filled_orders_remaining_input = 100_000;
-        let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
+        let tick_sequence = TickArraySequence::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
         let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 8, false, 6, 6).unwrap();
 
@@ -422,7 +422,7 @@ mod order_book_tests {
         tick_arrays[0].ticks[26].initialized = true;
         tick_arrays[1].ticks[13].liquidity_net = -(result.liquidity_delta as i128);
         tick_arrays[1].ticks[13].initialized = true;
-        let tick_sequence = Box::new(TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap());
+        let tick_sequence = Box::new(TickArraySequence::new(tick_arrays, fusion_pool.tick_spacing).unwrap());
 
         let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 7, false, 6, 6).unwrap();
 
@@ -476,7 +476,7 @@ mod order_book_tests {
         tick_arrays[0].ticks[0].part_filled_orders_remaining_input = 100_000;
         tick_arrays[0].ticks[26].liquidity_net = result.liquidity_delta as i128;
         tick_arrays[1].ticks[13].liquidity_net = -(result.liquidity_delta as i128);
-        let tick_sequence = Box::new(TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap());
+        let tick_sequence = Box::new(TickArraySequence::new(tick_arrays, fusion_pool.tick_spacing).unwrap());
 
         let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 4, false, 6, 6).unwrap();
 
@@ -534,7 +534,7 @@ mod order_book_tests {
         tick_arrays[4].ticks[87].open_orders_input = 100_000;
         tick_arrays[4].ticks[87].part_filled_orders_remaining_input = 100_000;
         tick_arrays[4].ticks[87].initialized = true;
-        let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
+        let tick_sequence = TickArraySequence::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
         let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 10, true, 6, 6).unwrap();
 
@@ -598,7 +598,7 @@ mod order_book_tests {
         tick_arrays[0].ticks[26].initialized = true;
         tick_arrays[1].ticks[13].liquidity_net = -(result.liquidity_delta as i128);
         tick_arrays[1].ticks[13].initialized = true;
-        let tick_sequence = Box::new(TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap());
+        let tick_sequence = Box::new(TickArraySequence::new(tick_arrays, fusion_pool.tick_spacing).unwrap());
 
         let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 11, true, 6, 6).unwrap();
 
@@ -660,7 +660,7 @@ mod order_book_tests {
         tick_arrays[2].ticks[75].initialized = true;
         tick_arrays[3].ticks[62].liquidity_net = -(result.liquidity_delta as i128);
         tick_arrays[3].ticks[62].initialized = true;
-        let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
+        let tick_sequence = TickArraySequence::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
         let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 1, false, 6, 6).unwrap();
 
@@ -685,7 +685,7 @@ mod order_book_tests {
         tick_arrays[0].ticks[26].initialized = true;
         tick_arrays[1].ticks[13].liquidity_net = -(result.liquidity_delta as i128);
         tick_arrays[1].ticks[13].initialized = true;
-        let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
+        let tick_sequence = TickArraySequence::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
         let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 1, false, 6, 6).unwrap();
 
@@ -718,7 +718,7 @@ mod order_book_tests {
 
         tick_arrays[2].ticks[54].initialized = true;
         tick_arrays[2].ticks[54].part_filled_orders_remaining_input = 15000000000;
-        let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
+        let tick_sequence = TickArraySequence::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
         let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 100, true, 6, 9).unwrap();
 
