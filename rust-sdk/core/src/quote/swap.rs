@@ -13,8 +13,8 @@ use crate::{
     try_get_amount_delta_a, try_get_amount_delta_b, try_get_max_amount_with_slippage_tolerance, try_get_min_amount_with_slippage_tolerance,
     try_get_next_sqrt_price_from_a, try_get_next_sqrt_price_from_b, try_mul_div, try_reverse_apply_swap_fee, try_reverse_apply_transfer_fee,
     CoreError, ExactInSwapQuote, ExactOutSwapQuote, FusionPoolFacade, TickArraySequence, TickArrays, TickFacade, TransferFee, AMOUNT_EXCEEDS_MAX_U64,
-    ARITHMETIC_OVERFLOW, FEE_RATE_MUL_VALUE, INVALID_SQRT_PRICE_LIMIT_DIRECTION, MAX_SQRT_PRICE, MIN_SQRT_PRICE, SQRT_PRICE_LIMIT_OUT_OF_BOUNDS,
-    ZERO_TRADABLE_AMOUNT,
+    ARITHMETIC_OVERFLOW, FEE_RATE_MUL_VALUE, INVALID_SQRT_PRICE_LIMIT_DIRECTION, MAX_SQRT_PRICE, MIN_SQRT_PRICE, MIN_TICK_INDEX,
+    SQRT_PRICE_LIMIT_OUT_OF_BOUNDS, ZERO_TRADABLE_AMOUNT,
 };
 
 #[cfg(feature = "wasm")]
@@ -194,7 +194,7 @@ pub fn compute_swap(
     let mut current_liquidity = fusion_pool.liquidity;
     let mut fee_amount = 0;
 
-    while amount_remaining > 0 && sqrt_price_limit != current_sqrt_price {
+    while current_tick_index != MIN_TICK_INDEX {
         let (next_tick, next_tick_index) = if a_to_b {
             tick_sequence.prev_initialized_tick(current_tick_index)?
         } else {
@@ -283,7 +283,7 @@ pub fn compute_swap(
     })
 }
 
-pub(crate) fn get_next_liquidity(current_liquidity: u128, next_tick: Option<TickFacade>, a_to_b: bool) -> u128 {
+pub(crate) fn get_next_liquidity(current_liquidity: u128, next_tick: Option<&TickFacade>, a_to_b: bool) -> u128 {
     let liquidity_net = next_tick.map(|tick| tick.liquidity_net).unwrap_or(0);
     let liquidity_net_unsigned = liquidity_net.unsigned_abs();
     if a_to_b {
@@ -309,7 +309,7 @@ pub struct LimitSwapComputation {
 }
 
 fn fill_limit_orders(
-    tick: Option<TickFacade>,
+    tick: Option<&TickFacade>,
     sqrt_price: u128,
     a_to_b: bool,
     amount_specified_is_input: bool,

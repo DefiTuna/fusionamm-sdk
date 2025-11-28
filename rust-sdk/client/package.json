@@ -1,6 +1,6 @@
 {
   "name": "@crypticdot/fusionamm-rust-client",
-  "version": "1.0.68",
+  "version": "1.0.70",
   "type": "module",
   "private": true,
   "files": [],

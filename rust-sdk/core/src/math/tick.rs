@@ -8,16 +8,16 @@
 // See the LICENSE file in the project root for license information.
 //
 
+use crate::{
+    CoreError, TickRange, FULL_RANGE_ONLY_TICK_SPACING_THRESHOLD, MAX_TICK_INDEX, MIN_TICK_INDEX, TICK_ARRAY_SIZE, TICK_INDEX_NOT_IN_ARRAY, U128,
+};
 use ethnum::U256;
 
 #[cfg(feature = "wasm")]
 use fusionamm_macros::wasm_expose;
 
-use crate::{
-    CoreError, TickRange, FULL_RANGE_ONLY_TICK_SPACING_THRESHOLD, MAX_TICK_INDEX, MIN_TICK_INDEX, TICK_ARRAY_SIZE, TICK_INDEX_NOT_IN_ARRAY, U128,
-};
-
 const LOG_B_2_X32: i128 = 59543866431248i128;
+
 const BIT_PRECISION: u32 = 14;
 const LOG_B_P_ERR_MARGIN_LOWER_X64: i128 = 184467440737095516i128; // 0.01
 const LOG_B_P_ERR_MARGIN_UPPER_X64: i128 = 15793534762490258745i128; // 2^-precision / log_2_b + 0.01
@@ -318,7 +318,6 @@ pub fn get_tick_index_in_array(tick_index: i32, tick_array_start_index: i32, tic
 }
 
 // Private functions
-
 fn mul_shift_96(n0: u128, n1: u128) -> u128 {
     let mul: U256 = (<U256>::from(n0) * <U256>::from(n1)) >> 96;
     mul.as_u128()

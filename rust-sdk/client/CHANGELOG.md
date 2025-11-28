@@ -1,5 +1,17 @@
 # @crypticdot/fusionamm-rust-client
 
+## 1.0.70
+
+## 1.0.69
+
+## 1.0.68
+
+## 1.0.67
+
+### Patch Changes
+
+- f9502ea: Updated anchor to 0.32.1
+
 ## 1.0.66
 
 ## 1.0.65

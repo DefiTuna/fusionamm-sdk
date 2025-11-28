@@ -54,7 +54,7 @@ impl From<TickArrays> for Vec<TickArrayFacade> {
         }
         let array: Array = val.unchecked_into();
         let mut result = vec![];
-        for (i, item) in array.iter().enumerate() {
+        for (_, item) in array.iter().enumerate() {
             if let Ok(item) = serde_wasm_bindgen::from_value(item) {
                 result.push(item);
             }

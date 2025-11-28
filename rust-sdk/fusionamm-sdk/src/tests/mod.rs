@@ -9,6 +9,7 @@
 //
 
 mod anchor;
+mod order_book_performance;
 mod program;
 mod rpc;
 mod token;

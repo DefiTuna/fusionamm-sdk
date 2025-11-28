@@ -738,8 +738,8 @@ mod order_book_tests {
     fn test_large_tick_arrays_with_initialized_ticks() -> Vec<TickArrayFacade> {
         let mut tick_arrays: Vec<TickArrayFacade> = vec![];
 
-        let start_index = get_tick_array_start_tick_index(-50000, 2);
-        let end_index = get_tick_array_start_tick_index(50000, 2);
+        let start_index = crate::get_tick_array_start_tick_index(-50000, 2);
+        let end_index = crate::get_tick_array_start_tick_index(50000, 2);
         for i in (start_index..end_index).step_by(176) {
             tick_arrays.push(test_tick_array(i, true))
         }
@@ -763,21 +763,36 @@ mod order_book_tests {
         tick_arrays[287].ticks[62].liquidity_net = -(result.liquidity_delta as i128);
         tick_arrays[288].ticks[87].open_orders_input = 100_000;
         tick_arrays[288].ticks[87].part_filled_orders_remaining_input = 100_000;
-        let tick_sequence = TickArraySequenceVec::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
+        let tick_sequence = TickArraySequence::new(tick_arrays, fusion_pool.tick_spacing).unwrap();
 
-        let instant = Instant::now();
+        let guard = pprof::ProfilerGuardBuilder::default()
+            .frequency(10000)
+            .blocklist(&["libc", "libgcc", "pthread", "vdso"])
+            .build()
+            .unwrap();
 
-        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, false, 6, 6, 100).unwrap();
+        let instant = std::time::Instant::now();
 
-        println!("{} ms", instant.elapsed().as_millis());
+        for _ in 0..100 {
+            let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 1, false, 6, 6).unwrap();
 
-        assert_eq!(order_book.len(), 1);
+            assert_eq!(order_book.len(), 1);
 
-        // Liquidity is in token A
-        assert_eq!(order_book[0].concentrated_amount, 991201);
-        assert_eq!(order_book[0].concentrated_amount_quote, 1031755);
-        assert_eq!(order_book[0].limit_amount, 200000);
-        //assert_eq!(instant.elapsed().as_millis(), 1111);
-    }
-     */
+            // Liquidity is in token A
+            assert_eq!(order_book[0].concentrated_amount, 991201);
+            assert_eq!(order_book[0].concentrated_amount_quote, 1031755);
+            assert_eq!(order_book[0].limit_amount, 200000);
+        }
+
+        assert_eq!(instant.elapsed().as_millis(), 1111);
+
+        if let Ok(report) = guard.report().build() {
+            let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+
+            let filename = format!("flamegraph_{}.svg", timestamp);
+            let file = std::fs::File::create(filename.clone()).unwrap();
+            report.flamegraph(file).unwrap();
+            eprintln!("{} saved!", filename);
+        }
+    }*/
 }

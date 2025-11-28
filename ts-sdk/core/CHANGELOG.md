@@ -1,5 +1,13 @@
 # @crypticdot/fusionamm-core
 
+## 1.0.70
+
+## 1.0.69
+
+### Patch Changes
+
+- 010c0ff: Optimized tick_index_to_sqrt_price
+
 ## 1.0.68
 
 ## 1.0.62
