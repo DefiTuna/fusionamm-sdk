@@ -1,79 +1,46 @@
 use fusionamm_client::{FusionPool, TickArray};
 use fusionamm_core::{
     get_order_book_side, get_tick_array_start_tick_index, invert_sqrt_price, price_to_sqrt_price, price_to_tick_index, sqrt_price_to_price,
-    sqrt_price_to_tick_index, tick_index_to_price, FusionPoolFacade, OrderBookEntry, TickArrayFacade, TickArraySequence, TickFacade, MAX_TICK_INDEX,
+    sqrt_price_to_tick_index, tick_index_to_price, FusionPoolFacade, OrderBookEntry, TickArrayFacade, TickArraySequence, MAX_TICK_INDEX,
     MIN_TICK_INDEX, TICK_ARRAY_SIZE,
 };
-use solana_pubkey::Pubkey;
 use std::collections::HashMap;
-use std::str::FromStr;
 
 const DEFAULT_ORDER_BOOK_ENTRIES: u32 = 12;
 const TICK_EDGE_OFFSET: i32 = 10000;
 
 #[derive(serde::Serialize, serde::Deserialize)]
-struct Pool {
+struct PoolData {
     mint_a_dec: u8,
     mint_b_dec: u8,
-    pool: Vec<u8>,
-    tick_arrays: HashMap<String, Vec<u8>>,
+    pool: FusionPool,
+    tick_arrays: Vec<TickArray>,
 }
 
 #[test]
 fn test_order_book_performance() {
-    let file = std::fs::File::open("src/tests/mocks/fusion_pools.json").unwrap();
+    let file = std::fs::File::open("src/tests/mocks/whirlpool_3ndjN1nJVUKGrJBc1hhVpER6kWTZKHdyDrPyCJyX3CXK.json").unwrap();
 
     // Deserialize JSON → HashMap<String, Pool>
-    let raw_pools: HashMap<String, Pool> = serde_json::from_reader(file).unwrap();
+    let mut pool_data: PoolData = serde_json::from_reader(file).unwrap();
 
-    let mut pools = HashMap::new();
-    let mut tick_arrays = HashMap::new();
-    let mut decimals = HashMap::new();
+    pool_data.tick_arrays.sort_by_key(|k| k.start_tick_index);
 
-    for (pool_address, pool) in raw_pools {
-        let pool_address = Pubkey::from_str(&pool_address).unwrap();
-
-        decimals.insert(pool_address, (pool.mint_a_dec, pool.mint_b_dec));
-
-        let mut pool_tick_arrays = HashMap::new();
-
-        for (tick_array_address, tick_array) in pool.tick_arrays {
-            let tick_array_address = Pubkey::from_str(&tick_array_address).unwrap();
-            let tick_array = TickArray::from_bytes(&tick_array).unwrap();
-
-            pool_tick_arrays.insert(tick_array_address, tick_array);
-        }
-
-        tick_arrays.insert(pool_address, pool_tick_arrays);
-
-        let pool = FusionPool::from_bytes(&pool.pool).unwrap();
-
-        pools.insert(pool_address, pool);
-    }
-
-    let mut tick_arrays_map_vec = HashMap::new();
-
-    for (tick_array_address, tick_arrays) in tick_arrays {
-        let mut vec = tick_arrays.into_values().collect::<Vec<_>>();
-        vec.sort_by_key(|k| k.start_tick_index);
-
-        tick_arrays_map_vec.insert(tick_array_address, vec);
-    }
-
-    println!("pools: {:?}", pools.len());
+    // Optional: print PID if you want to attach manually
+    println!("PID: {}", std::process::id());
+    // Delay perf sampling by sleeping
+    //std::thread::sleep(std::time::Duration::from_secs(10));
 
     /*
-    let guard = pprof::ProfilerGuardBuilder::default()
-        .frequency(10000)
-        .blocklist(&["libc", "libgcc", "pthread", "vdso"])
-        .build()
-        .unwrap();
+        let guard = pprof::ProfilerGuardBuilder::default()
+            .frequency(10000)
+            .blocklist(&["libc", "libgcc", "pthread", "vdso"])
+            .build()
+            .unwrap();
     */
     let start = std::time::Instant::now();
 
-    for (pool_address, pool) in pools.iter() {
-        calc_order_book(pool, tick_arrays_map_vec.get(pool_address).unwrap(), *decimals.get(pool_address).unwrap());
-    }
+    calc_order_book(&pool_data.pool, &pool_data.tick_arrays, (pool_data.mint_a_dec, pool_data.mint_b_dec));
 
     println!("Done in {:?}", start.elapsed());
 
@@ -85,8 +52,7 @@ fn test_order_book_performance() {
         let file = std::fs::File::create(filename.clone()).unwrap();
         report.flamegraph(file).unwrap();
         eprintln!("{} saved!", filename);
-    }
-    */
+    }*/
 }
 
 fn calc_order_book(pool: &FusionPool, tick_arrays: &Vec<TickArray>, decimals: (u8, u8)) {
@@ -187,18 +153,13 @@ impl OrderBook {
 
             if let Some(tick_array) = tick_array {
                 matching_tick_arrays.push((*tick_array).clone().into());
-            } else {
-                matching_tick_arrays.push(TickArrayFacade {
-                    start_tick_index: tick_array_start_index,
-                    ticks: [TickFacade::default(); 88],
-                });
             }
         }
 
-        let tick_array_sequence = TickArraySequence {
-            tick_arrays: matching_tick_arrays,
-            tick_spacing: fusion_pool_facade.tick_spacing,
-        };
+        //let sss = std::time::Instant::now();
+        //let len = matching_tick_arrays.len();
+        let tick_array_sequence = TickArraySequence::new(matching_tick_arrays, fusion_pool_facade.tick_spacing)?;
+        //println!("SEQ of {} tick arrays build in {:?}", len, sss.elapsed());
 
         let asks = get_order_book_side(&fusion_pool_facade, &tick_array_sequence, price_step, entries, inverted, decimals_a, decimals_b)?;
         let bids = get_order_book_side(&fusion_pool_facade, &tick_array_sequence, price_step * -1.0, entries, inverted, decimals_a, decimals_b)?;

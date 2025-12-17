@@ -10,9 +10,10 @@
 
 use crate::{
     CoreError, TransferFee, AMOUNT_EXCEEDS_MAX_U64, ARITHMETIC_OVERFLOW, BPS_DENOMINATOR, FEE_RATE_MUL_VALUE, INVALID_SLIPPAGE_TOLERANCE,
-    INVALID_TRANSFER_FEE, MAX_SQRT_PRICE, MIN_SQRT_PRICE, SQRT_PRICE_OUT_OF_BOUNDS, U128,
+    INVALID_TRANSFER_FEE, MAX_SQRT_PRICE, MIN_SQRT_PRICE, SQRT_PRICE_OUT_OF_BOUNDS,
 };
 
+use crate::math::liquidity::{get_amount_a_from_liquidity, get_amount_b_from_liquidity};
 use crate::math::u256_math::{mul_u256, U256Muldiv};
 use ethnum::U256;
 #[cfg(feature = "wasm")]
@@ -29,25 +30,9 @@ use fusionamm_macros::wasm_expose;
 /// # Returns
 /// - `u64`: The amount delta
 #[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn try_get_amount_delta_a(sqrt_price_1: U128, sqrt_price_2: U128, liquidity: U128, round_up: bool) -> Result<u64, CoreError> {
-    let (sqrt_price_lower, sqrt_price_upper) = order_prices(sqrt_price_1.into(), sqrt_price_2.into());
-    let sqrt_price_diff = sqrt_price_upper - sqrt_price_lower;
-    let numerator: U256 = <U256>::from(liquidity)
-        .checked_mul(sqrt_price_diff.into())
-        .ok_or(ARITHMETIC_OVERFLOW)?
-        .checked_shl(64)
-        .ok_or(ARITHMETIC_OVERFLOW)?;
-
-    let denominator: U256 = <U256>::from(sqrt_price_lower)
-        .checked_mul(sqrt_price_upper.into())
-        .ok_or(ARITHMETIC_OVERFLOW)?;
-
-    let quotient = numerator / denominator;
-    let remainder = numerator % denominator;
-
-    let result = if round_up && remainder != 0 { quotient + 1 } else { quotient };
-
-    result.try_into().map_err(|_| AMOUNT_EXCEEDS_MAX_U64)
+pub fn try_get_amount_delta_a(sqrt_price_1: u128, sqrt_price_2: u128, liquidity: u128, round_up: bool) -> Result<u64, CoreError> {
+    let (sqrt_price_lower, sqrt_price_upper) = order_prices(sqrt_price_1, sqrt_price_2);
+    get_amount_a_from_liquidity(liquidity, sqrt_price_lower, sqrt_price_upper, round_up)
 }
 
 /// Calculate the amount B delta between two sqrt_prices
@@ -61,18 +46,9 @@ pub fn try_get_amount_delta_a(sqrt_price_1: U128, sqrt_price_2: U128, liquidity:
 /// # Returns
 /// - `u64`: The amount delta
 #[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn try_get_amount_delta_b(sqrt_price_1: U128, sqrt_price_2: U128, liquidity: U128, round_up: bool) -> Result<u64, CoreError> {
-    let (sqrt_price_lower, sqrt_price_upper) = order_prices(sqrt_price_1.into(), sqrt_price_2.into());
-    let sqrt_price_diff = sqrt_price_upper - sqrt_price_lower;
-
-    let product: U256 = <U256>::from(liquidity).checked_mul(sqrt_price_diff.into()).ok_or(ARITHMETIC_OVERFLOW)?;
-    let quotient: U256 = product >> 64;
-
-    let should_round = round_up && product & <U256>::from(u64::MAX) > 0;
-
-    let result = if should_round { quotient + 1 } else { quotient };
-
-    result.try_into().map_err(|_| AMOUNT_EXCEEDS_MAX_U64)
+pub fn try_get_amount_delta_b(sqrt_price_1: u128, sqrt_price_2: u128, liquidity: u128, round_up: bool) -> Result<u64, CoreError> {
+    let (sqrt_price_lower, sqrt_price_upper) = order_prices(sqrt_price_1, sqrt_price_2);
+    get_amount_b_from_liquidity(liquidity, sqrt_price_lower, sqrt_price_upper, round_up)
 }
 
 /// Calculate the next square root price
@@ -87,16 +63,14 @@ pub fn try_get_amount_delta_b(sqrt_price_1: U128, sqrt_price_2: U128, liquidity:
 /// - `u128`: The next square root price
 #[cfg_attr(feature = "wasm", wasm_expose)]
 pub fn try_get_next_sqrt_price_from_a(
-    current_sqrt_price: U128,
-    current_liquidity: U128,
+    current_sqrt_price: u128,
+    current_liquidity: u128,
     amount: u64,
     specified_input: bool,
-) -> Result<U128, CoreError> {
+) -> Result<u128, CoreError> {
     if amount == 0 {
         return Ok(current_sqrt_price);
     }
-    let current_sqrt_price: u128 = current_sqrt_price.into();
-    let current_liquidity: u128 = current_liquidity.into();
 
     let p = <U256>::from(current_sqrt_price).checked_mul(amount.into()).ok_or(ARITHMETIC_OVERFLOW)?;
     let numerator = <U256>::from(current_liquidity)
@@ -121,7 +95,7 @@ pub fn try_get_next_sqrt_price_from_a(
         return Err(SQRT_PRICE_OUT_OF_BOUNDS);
     }
 
-    Ok(result.as_u128().into())
+    Ok(result.as_u128())
 }
 
 /// Calculate the next square root price
@@ -136,11 +110,11 @@ pub fn try_get_next_sqrt_price_from_a(
 /// - `u128`: The next square root price
 #[cfg_attr(feature = "wasm", wasm_expose)]
 pub fn try_get_next_sqrt_price_from_b(
-    current_sqrt_price: U128,
-    current_liquidity: U128,
+    current_sqrt_price: u128,
+    current_liquidity: u128,
     amount: u64,
     specified_input: bool,
-) -> Result<U128, CoreError> {
+) -> Result<u128, CoreError> {
     if amount == 0 {
         return Ok(current_sqrt_price);
     }
@@ -163,7 +137,7 @@ pub fn try_get_next_sqrt_price_from_b(
         return Err(SQRT_PRICE_OUT_OF_BOUNDS);
     }
 
-    Ok(result.as_u128().into())
+    Ok(result.as_u128())
 }
 
 /// Apply a transfer fee to an amount

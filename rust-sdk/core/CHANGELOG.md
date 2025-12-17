@@ -1,5 +1,41 @@
 # @crypticdot/fusionamm-rust-core
 
+## 1.0.76
+
+### Patch Changes
+
+- 5ab3f58: Updated liquidity math
+
+## 1.0.75
+
+### Patch Changes
+
+- 3c257ee: Code cleanup
+
+## 1.0.74
+
+### Patch Changes
+
+- ad1d56f: Removed U128
+
+## 1.0.73
+
+### Patch Changes
+
+- 5d852b8: Made Q64_RESOLUTION public
+
+## 1.0.72
+
+### Patch Changes
+
+- 9bb3e0f: Improved order book performance
+
+## 1.0.71
+
+### Patch Changes
+
+- a869feb: Improved order book performance
+
 ## 1.0.70
 
 ### Patch Changes

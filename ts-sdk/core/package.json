@@ -1,7 +1,7 @@
 {
   "name": "@crypticdot/fusionamm-core",
   "description": "FusionAMM core typescript package.",
-  "version": "1.0.70",
+  "version": "1.0.76",
   "main": "./dist/nodejs/fusionamm_core_js_bindings.js",
   "types": "./dist/nodejs/fusionamm_core_js_bindings.d.ts",
   "browser": "./dist/browser/fusionamm_core_js_bindings.js",

@@ -13,11 +13,9 @@ use fusionamm_macros::wasm_expose;
 
 use libm::{floor, pow, sqrt};
 
-use crate::U128;
-
 use super::{invert_tick_index, sqrt_price_to_tick_index, tick_index_to_sqrt_price};
 
-const Q64_RESOLUTION: f64 = 18446744073709551616.0;
+pub const Q64_RESOLUTION: f64 = 18446744073709551616.0;
 
 /// Convert a price into a sqrt priceX64
 /// IMPORTANT: floating point operations can reduce the precision of the result.
@@ -31,7 +29,7 @@ const Q64_RESOLUTION: f64 = 18446744073709551616.0;
 /// # Returns
 /// * `u128` - The sqrt priceX64
 #[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn price_to_sqrt_price(price: f64, decimals_a: u8, decimals_b: u8) -> U128 {
+pub fn price_to_sqrt_price(price: f64, decimals_a: u8, decimals_b: u8) -> u128 {
     let power = pow(10f64, decimals_a as f64 - decimals_b as f64);
     (floor(sqrt(price / power) * Q64_RESOLUTION) as u128).into()
 }
@@ -48,7 +46,7 @@ pub fn price_to_sqrt_price(price: f64, decimals_a: u8, decimals_b: u8) -> U128 {
 /// # Returns
 /// * `f64` - The decimal price
 #[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn sqrt_price_to_price(sqrt_price: U128, decimals_a: u8, decimals_b: u8) -> f64 {
+pub fn sqrt_price_to_price(sqrt_price: u128, decimals_a: u8, decimals_b: u8) -> f64 {
     let power = pow(10f64, decimals_a as f64 - decimals_b as f64);
     let sqrt_price: u128 = sqrt_price.into();
     let sqrt_price_u128 = sqrt_price as f64;

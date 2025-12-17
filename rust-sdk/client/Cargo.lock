@@ -1281,6 +1281,7 @@ dependencies = [
  "ethnum",
  "fusionamm-macros",
  "libm",
+ "once_cell",
 ]
 
 [[package]]

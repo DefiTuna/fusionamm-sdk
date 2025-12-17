@@ -1,6 +1,6 @@
 {
   "name": "@crypticdot/fusionamm-client",
-  "version": "1.0.70",
+  "version": "1.0.76",
   "description": "Typescript client to interact with FusionAMM on-chain program.",
   "type": "module",
   "main": "./dist/index.cjs",

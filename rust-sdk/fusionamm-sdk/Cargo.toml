@@ -10,13 +10,16 @@ keywords = ["solana", "crypto", "defi", "dex", "amm"]
 authors = ["info@fusionamm.com"]
 edition = "2021"
 
+[profile.release]
+debug = true
+
 [features]
 default = []
 solana-v1 = ["fusionamm-client/solana-v1"]
 
 [dependencies]
-fusionamm-core = { path = "../core", features = ["floats"] }
-fusionamm-client = { path = "../client", features = ["fetch"] }
+fusionamm-core = { path = "../core" }
+fusionamm-client = { path = "../client", features = ["fetch", "serde"] }
 
 # Solana
 solana-client = { version = "^2.2" }
@@ -57,4 +60,4 @@ toml = { version = "^0.8" }
 tokio = { version = "^1.0", features = ["sync"] }
 lazy_static = { version = "^1.5" }
 rstest = "0.25"
-pprof = { version = "0.15", features = ["flamegraph"] }
+#pprof = { version = "0.15", features = ["flamegraph", "huge-depth"] }

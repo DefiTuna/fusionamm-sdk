@@ -7,7 +7,7 @@
 // Modifications licensed under FusionAMM SDK Source-Available License v1.0
 // See the LICENSE file in the project root for license information.
 //
-use crate::{PositionRatio, PositionStatus, U128};
+use crate::{PositionRatio, PositionStatus};
 
 use ethnum::U256;
 #[cfg(feature = "wasm")]
@@ -26,8 +26,8 @@ use super::{order_tick_indexes, tick_index_to_sqrt_price};
 /// # Returns
 /// - A boolean value indicating if the position is in range
 #[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn is_position_in_range(current_sqrt_price: U128, tick_index_1: i32, tick_index_2: i32) -> bool {
-    position_status(current_sqrt_price.into(), tick_index_1, tick_index_2) == PositionStatus::PriceInRange
+pub fn is_position_in_range(current_sqrt_price: u128, tick_index_1: i32, tick_index_2: i32) -> bool {
+    position_status(current_sqrt_price, tick_index_1, tick_index_2) == PositionStatus::PriceInRange
 }
 
 /// Calculate the status of a position
@@ -44,11 +44,10 @@ pub fn is_position_in_range(current_sqrt_price: U128, tick_index_1: i32, tick_in
 /// # Returns
 /// - A PositionStatus enum value indicating the status of the position
 #[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn position_status(current_sqrt_price: U128, tick_index_1: i32, tick_index_2: i32) -> PositionStatus {
-    let current_sqrt_price: u128 = current_sqrt_price.into();
+pub fn position_status(current_sqrt_price: u128, tick_index_1: i32, tick_index_2: i32) -> PositionStatus {
     let tick_range = order_tick_indexes(tick_index_1, tick_index_2);
-    let sqrt_price_lower: u128 = tick_index_to_sqrt_price(tick_range.tick_lower_index).into();
-    let sqrt_price_upper: u128 = tick_index_to_sqrt_price(tick_range.tick_upper_index).into();
+    let sqrt_price_lower = tick_index_to_sqrt_price(tick_range.tick_lower_index);
+    let sqrt_price_upper = tick_index_to_sqrt_price(tick_range.tick_upper_index);
 
     if tick_index_1 == tick_index_2 {
         PositionStatus::Invalid
@@ -71,10 +70,9 @@ pub fn position_status(current_sqrt_price: U128, tick_index_1: i32, tick_index_2
 /// # Returns
 /// - A PositionRatio struct containing the ratio of token_a and token_b
 #[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn position_ratio_x64(current_sqrt_price: U128, tick_index_1: i32, tick_index_2: i32) -> PositionRatio {
+pub fn position_ratio_x64(current_sqrt_price: u128, tick_index_1: i32, tick_index_2: i32) -> PositionRatio {
     let one_x64: u128 = 1 << 64;
-    let current_sqrt_price: u128 = current_sqrt_price.into();
-    let position_status = position_status(current_sqrt_price.into(), tick_index_1, tick_index_2);
+    let position_status = position_status(current_sqrt_price, tick_index_1, tick_index_2);
     match position_status {
         PositionStatus::Invalid => PositionRatio { ratio_a: 0, ratio_b: 0 },
         PositionStatus::PriceBelowRange => PositionRatio {
@@ -87,8 +85,8 @@ pub fn position_ratio_x64(current_sqrt_price: U128, tick_index_1: i32, tick_inde
         },
         PositionStatus::PriceInRange => {
             let tick_range = order_tick_indexes(tick_index_1, tick_index_2);
-            let lower_sqrt_price: u128 = tick_index_to_sqrt_price(tick_range.tick_lower_index).into();
-            let upper_sqrt_price: u128 = tick_index_to_sqrt_price(tick_range.tick_upper_index).into();
+            let lower_sqrt_price = tick_index_to_sqrt_price(tick_range.tick_lower_index);
+            let upper_sqrt_price = tick_index_to_sqrt_price(tick_range.tick_upper_index);
 
             let l: U256 = <U256>::from(1u16) << 64;
             let p = <U256>::from(current_sqrt_price) * <U256>::from(current_sqrt_price);

@@ -46,6 +46,9 @@ pub const SQRT_PRICE_LIMIT_OUT_OF_BOUNDS: CoreError = "Sqrt price limit out of b
 pub const INVALID_SQRT_PRICE_LIMIT_DIRECTION: CoreError = "Invalid sqrt price limit direction";
 
 #[cfg_attr(feature = "wasm", wasm_expose)]
+pub const INVALID_RANGE_BOUNDS: CoreError = "Invalid range lower/upper bounds";
+
+#[cfg_attr(feature = "wasm", wasm_expose)]
 pub const ZERO_TRADABLE_AMOUNT: CoreError = "Zero tradable amount";
 
 #[cfg_attr(feature = "wasm", wasm_expose)]

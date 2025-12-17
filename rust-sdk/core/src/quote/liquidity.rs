@@ -11,20 +11,11 @@
 #[cfg(feature = "wasm")]
 use fusionamm_macros::wasm_expose;
 
-use ethnum::U256;
-
 use crate::{
-    order_tick_indexes, position_status, tick_index_to_sqrt_price, try_apply_transfer_fee, try_get_max_amount_with_slippage_tolerance,
-    try_get_min_amount_with_slippage_tolerance, try_reverse_apply_transfer_fee, CoreError, DecreaseLiquidityQuote, IncreaseLiquidityQuote,
-    PositionStatus, TransferFee, AMOUNT_EXCEEDS_MAX_U64, ARITHMETIC_OVERFLOW, U128,
+    get_amounts_from_liquidity, get_liquidity_from_amount_a, get_liquidity_from_amount_b, order_tick_indexes, position_status,
+    tick_index_to_sqrt_price, try_apply_transfer_fee, try_get_max_amount_with_slippage_tolerance, try_get_min_amount_with_slippage_tolerance,
+    try_reverse_apply_transfer_fee, CoreError, DecreaseLiquidityQuote, IncreaseLiquidityQuote, PositionStatus, TransferFee,
 };
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "wasm", wasm_expose)]
-pub struct TokenPair {
-    pub a: u64,
-    pub b: u64,
-}
 
 /// Calculate the quote for decreasing liquidity
 ///
@@ -41,9 +32,9 @@ pub struct TokenPair {
 /// - A DecreaseLiquidityQuote struct containing the estimated token amounts
 #[cfg_attr(feature = "wasm", wasm_expose)]
 pub fn decrease_liquidity_quote(
-    liquidity_delta: U128,
+    liquidity_delta: u128,
     slippage_tolerance_bps: u16,
-    current_sqrt_price: U128,
+    current_sqrt_price: u128,
     tick_index_1: i32,
     tick_index_2: i32,
     transfer_fee_a: Option<TransferFee>,
@@ -57,8 +48,10 @@ pub fn decrease_liquidity_quote(
     let tick_range = order_tick_indexes(tick_index_1, tick_index_2);
     let current_sqrt_price: u128 = current_sqrt_price.into();
 
-    let token_est =
-        try_get_token_estimates_from_liquidity(liquidity_delta, current_sqrt_price, tick_range.tick_lower_index, tick_range.tick_upper_index, false)?;
+    let sqrt_price_lower = tick_index_to_sqrt_price(tick_range.tick_lower_index);
+    let sqrt_price_upper = tick_index_to_sqrt_price(tick_range.tick_upper_index);
+
+    let token_est = get_amounts_from_liquidity(liquidity_delta, current_sqrt_price, sqrt_price_lower, sqrt_price_upper, false)?;
 
     let token_est_a = try_apply_transfer_fee(token_est.a, transfer_fee_a.unwrap_or_default())?;
     let token_est_b = try_apply_transfer_fee(token_est.b, transfer_fee_b.unwrap_or_default())?;
@@ -92,7 +85,7 @@ pub fn decrease_liquidity_quote(
 pub fn decrease_liquidity_quote_a(
     token_amount_a: u64,
     slippage_tolerance_bps: u16,
-    current_sqrt_price: U128,
+    current_sqrt_price: u128,
     tick_index_1: i32,
     tick_index_2: i32,
     transfer_fee_a: Option<TransferFee>,
@@ -112,9 +105,9 @@ pub fn decrease_liquidity_quote_a(
     let position_status = position_status(current_sqrt_price.into(), tick_range.tick_lower_index, tick_range.tick_upper_index);
 
     let liquidity: u128 = match position_status {
-        PositionStatus::PriceBelowRange => try_get_liquidity_from_a(token_delta_a, sqrt_price_lower, sqrt_price_upper)?,
+        PositionStatus::PriceBelowRange => get_liquidity_from_amount_a(token_delta_a, sqrt_price_lower, sqrt_price_upper)?,
         PositionStatus::Invalid | PositionStatus::PriceAboveRange => 0,
-        PositionStatus::PriceInRange => try_get_liquidity_from_a(token_delta_a, current_sqrt_price, sqrt_price_upper)?,
+        PositionStatus::PriceInRange => get_liquidity_from_amount_a(token_delta_a, current_sqrt_price, sqrt_price_upper)?,
     };
 
     decrease_liquidity_quote(
@@ -145,7 +138,7 @@ pub fn decrease_liquidity_quote_a(
 pub fn decrease_liquidity_quote_b(
     token_amount_b: u64,
     slippage_tolerance_bps: u16,
-    current_sqrt_price: U128,
+    current_sqrt_price: u128,
     tick_index_1: i32,
     tick_index_2: i32,
     transfer_fee_a: Option<TransferFee>,
@@ -166,8 +159,8 @@ pub fn decrease_liquidity_quote_b(
 
     let liquidity: u128 = match position_status {
         PositionStatus::Invalid | PositionStatus::PriceBelowRange => 0,
-        PositionStatus::PriceAboveRange => try_get_liquidity_from_b(token_delta_b, sqrt_price_lower, sqrt_price_upper)?,
-        PositionStatus::PriceInRange => try_get_liquidity_from_b(token_delta_b, sqrt_price_lower, current_sqrt_price)?,
+        PositionStatus::PriceAboveRange => get_liquidity_from_amount_b(token_delta_b, sqrt_price_lower, sqrt_price_upper)?,
+        PositionStatus::PriceInRange => get_liquidity_from_amount_b(token_delta_b, sqrt_price_lower, current_sqrt_price)?,
     };
 
     decrease_liquidity_quote(
@@ -196,9 +189,9 @@ pub fn decrease_liquidity_quote_b(
 /// - An IncreaseLiquidityQuote struct containing the estimated token amounts
 #[cfg_attr(feature = "wasm", wasm_expose)]
 pub fn increase_liquidity_quote(
-    liquidity_delta: U128,
+    liquidity_delta: u128,
     slippage_tolerance_bps: u16,
-    current_sqrt_price: U128,
+    current_sqrt_price: u128,
     tick_index_1: i32,
     tick_index_2: i32,
     transfer_fee_a: Option<TransferFee>,
@@ -209,11 +202,11 @@ pub fn increase_liquidity_quote(
         return Ok(IncreaseLiquidityQuote::default());
     }
 
-    let current_sqrt_price: u128 = current_sqrt_price.into();
     let tick_range = order_tick_indexes(tick_index_1, tick_index_2);
+    let sqrt_price_lower = tick_index_to_sqrt_price(tick_range.tick_lower_index);
+    let sqrt_price_upper = tick_index_to_sqrt_price(tick_range.tick_upper_index);
 
-    let token_est =
-        try_get_token_estimates_from_liquidity(liquidity_delta, current_sqrt_price, tick_range.tick_lower_index, tick_range.tick_upper_index, true)?;
+    let token_est = get_amounts_from_liquidity(liquidity_delta, current_sqrt_price, sqrt_price_lower, sqrt_price_upper, true)?;
 
     let token_est_a = try_reverse_apply_transfer_fee(token_est.a, transfer_fee_a.unwrap_or_default())?;
     let token_est_b = try_reverse_apply_transfer_fee(token_est.b, transfer_fee_b.unwrap_or_default())?;
@@ -247,7 +240,7 @@ pub fn increase_liquidity_quote(
 pub fn increase_liquidity_quote_a(
     token_amount_a: u64,
     slippage_tolerance_bps: u16,
-    current_sqrt_price: U128,
+    current_sqrt_price: u128,
     tick_index_1: i32,
     tick_index_2: i32,
     transfer_fee_a: Option<TransferFee>,
@@ -260,16 +253,15 @@ pub fn increase_liquidity_quote_a(
         return Ok(IncreaseLiquidityQuote::default());
     }
 
-    let current_sqrt_price: u128 = current_sqrt_price.into();
-    let sqrt_price_lower: u128 = tick_index_to_sqrt_price(tick_range.tick_lower_index).into();
-    let sqrt_price_upper: u128 = tick_index_to_sqrt_price(tick_range.tick_upper_index).into();
+    let sqrt_price_lower = tick_index_to_sqrt_price(tick_range.tick_lower_index);
+    let sqrt_price_upper = tick_index_to_sqrt_price(tick_range.tick_upper_index);
 
-    let position_status = position_status(current_sqrt_price.into(), tick_index_1, tick_index_2);
+    let position_status = position_status(current_sqrt_price, tick_index_1, tick_index_2);
 
     let liquidity: u128 = match position_status {
-        PositionStatus::PriceBelowRange => try_get_liquidity_from_a(token_delta_a, sqrt_price_lower, sqrt_price_upper)?,
+        PositionStatus::PriceBelowRange => get_liquidity_from_amount_a(token_delta_a, sqrt_price_lower, sqrt_price_upper)?,
         PositionStatus::Invalid | PositionStatus::PriceAboveRange => 0,
-        PositionStatus::PriceInRange => try_get_liquidity_from_a(token_delta_a, current_sqrt_price, sqrt_price_upper)?,
+        PositionStatus::PriceInRange => get_liquidity_from_amount_a(token_delta_a, current_sqrt_price, sqrt_price_upper)?,
     };
 
     increase_liquidity_quote(
@@ -300,7 +292,7 @@ pub fn increase_liquidity_quote_a(
 pub fn increase_liquidity_quote_b(
     token_amount_b: u64,
     slippage_tolerance_bps: u16,
-    current_sqrt_price: U128,
+    current_sqrt_price: u128,
     tick_index_1: i32,
     tick_index_2: i32,
     transfer_fee_a: Option<TransferFee>,
@@ -313,126 +305,18 @@ pub fn increase_liquidity_quote_b(
         return Ok(IncreaseLiquidityQuote::default());
     }
 
-    let current_sqrt_price: u128 = current_sqrt_price.into();
-    let sqrt_price_lower: u128 = tick_index_to_sqrt_price(tick_range.tick_lower_index).into();
-    let sqrt_price_upper: u128 = tick_index_to_sqrt_price(tick_range.tick_upper_index).into();
+    let sqrt_price_lower = tick_index_to_sqrt_price(tick_range.tick_lower_index);
+    let sqrt_price_upper = tick_index_to_sqrt_price(tick_range.tick_upper_index);
 
-    let position_status = position_status(current_sqrt_price.into(), tick_index_1, tick_index_2);
+    let position_status = position_status(current_sqrt_price, tick_index_1, tick_index_2);
 
     let liquidity: u128 = match position_status {
         PositionStatus::Invalid | PositionStatus::PriceBelowRange => 0,
-        PositionStatus::PriceAboveRange => try_get_liquidity_from_b(token_delta_b, sqrt_price_lower, sqrt_price_upper)?,
-        PositionStatus::PriceInRange => try_get_liquidity_from_b(token_delta_b, sqrt_price_lower, current_sqrt_price)?,
+        PositionStatus::PriceAboveRange => get_liquidity_from_amount_b(token_delta_b, sqrt_price_lower, sqrt_price_upper)?,
+        PositionStatus::PriceInRange => get_liquidity_from_amount_b(token_delta_b, sqrt_price_lower, current_sqrt_price)?,
     };
 
-    increase_liquidity_quote(
-        liquidity.into(),
-        slippage_tolerance_bps,
-        current_sqrt_price.into(),
-        tick_index_1,
-        tick_index_2,
-        transfer_fee_a,
-        transfer_fee_b,
-    )
-}
-
-#[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn try_get_liquidity_from_a(token_delta_a: u64, sqrt_price_lower: u128, sqrt_price_upper: u128) -> Result<u128, CoreError> {
-    let sqrt_price_diff = sqrt_price_upper - sqrt_price_lower;
-    let mul: U256 = <U256>::from(token_delta_a)
-        .checked_mul(sqrt_price_lower.into())
-        .ok_or(ARITHMETIC_OVERFLOW)?
-        .checked_mul(sqrt_price_upper.into())
-        .ok_or(ARITHMETIC_OVERFLOW)?;
-    let result: U256 = (mul / sqrt_price_diff) >> 64;
-    result.try_into().map_err(|_| AMOUNT_EXCEEDS_MAX_U64)
-}
-
-#[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn try_get_token_a_from_liquidity(
-    liquidity_delta: u128,
-    sqrt_price_lower: u128,
-    sqrt_price_upper: u128,
-    round_up: bool,
-) -> Result<u64, CoreError> {
-    let sqrt_price_diff = sqrt_price_upper - sqrt_price_lower;
-    let numerator: U256 = <U256>::from(liquidity_delta)
-        .checked_mul(sqrt_price_diff.into())
-        .ok_or(ARITHMETIC_OVERFLOW)?
-        .checked_shl(64)
-        .ok_or(ARITHMETIC_OVERFLOW)?;
-    let denominator = <U256>::from(sqrt_price_upper)
-        .checked_mul(<U256>::from(sqrt_price_lower))
-        .ok_or(ARITHMETIC_OVERFLOW)?;
-    let quotient = numerator / denominator;
-    let remainder = numerator % denominator;
-    if round_up && remainder != 0 {
-        (quotient + 1).try_into().map_err(|_| AMOUNT_EXCEEDS_MAX_U64)
-    } else {
-        quotient.try_into().map_err(|_| AMOUNT_EXCEEDS_MAX_U64)
-    }
-}
-
-#[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn try_get_liquidity_from_b(token_delta_b: u64, sqrt_price_lower: u128, sqrt_price_upper: u128) -> Result<u128, CoreError> {
-    let numerator: U256 = <U256>::from(token_delta_b).checked_shl(64).ok_or(ARITHMETIC_OVERFLOW)?;
-    let sqrt_price_diff = sqrt_price_upper - sqrt_price_lower;
-    let result = numerator / <U256>::from(sqrt_price_diff);
-    result.try_into().map_err(|_| AMOUNT_EXCEEDS_MAX_U64)
-}
-
-#[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn try_get_token_b_from_liquidity(
-    liquidity_delta: u128,
-    sqrt_price_lower: u128,
-    sqrt_price_upper: u128,
-    round_up: bool,
-) -> Result<u64, CoreError> {
-    let sqrt_price_diff = sqrt_price_upper - sqrt_price_lower;
-    let mul: U256 = <U256>::from(liquidity_delta)
-        .checked_mul(sqrt_price_diff.into())
-        .ok_or(ARITHMETIC_OVERFLOW)?;
-    let result: U256 = mul >> 64;
-    if round_up && mul & <U256>::from(u64::MAX) > 0 {
-        (result + 1).try_into().map_err(|_| AMOUNT_EXCEEDS_MAX_U64)
-    } else {
-        result.try_into().map_err(|_| AMOUNT_EXCEEDS_MAX_U64)
-    }
-}
-
-#[cfg_attr(feature = "wasm", wasm_expose)]
-pub fn try_get_token_estimates_from_liquidity(
-    liquidity_delta: u128,
-    current_sqrt_price: u128,
-    tick_lower_index: i32,
-    tick_upper_index: i32,
-    round_up: bool,
-) -> Result<TokenPair, CoreError> {
-    if liquidity_delta == 0 {
-        return Ok(TokenPair { a: 0, b: 0 });
-    }
-
-    let sqrt_price_lower = tick_index_to_sqrt_price(tick_lower_index).into();
-    let sqrt_price_upper = tick_index_to_sqrt_price(tick_upper_index).into();
-
-    let position_status = position_status(current_sqrt_price.into(), tick_lower_index, tick_upper_index);
-
-    match position_status {
-        PositionStatus::PriceBelowRange => {
-            let token_a = try_get_token_a_from_liquidity(liquidity_delta, sqrt_price_lower, sqrt_price_upper, round_up)?;
-            Ok(TokenPair { a: token_a, b: 0 })
-        }
-        PositionStatus::PriceInRange => {
-            let token_a = try_get_token_a_from_liquidity(liquidity_delta, current_sqrt_price, sqrt_price_upper, round_up)?;
-            let token_b = try_get_token_b_from_liquidity(liquidity_delta, sqrt_price_lower, current_sqrt_price, round_up)?;
-            Ok(TokenPair { a: token_a, b: token_b })
-        }
-        PositionStatus::PriceAboveRange => {
-            let token_b = try_get_token_b_from_liquidity(liquidity_delta, sqrt_price_lower, sqrt_price_upper, round_up)?;
-            Ok(TokenPair { a: 0, b: token_b })
-        }
-        PositionStatus::Invalid => Ok(TokenPair { a: 0, b: 0 }),
-    }
+    increase_liquidity_quote(liquidity, slippage_tolerance_bps, current_sqrt_price, tick_index_1, tick_index_2, transfer_fee_a, transfer_fee_b)
 }
 
 #[cfg(all(test, not(feature = "wasm")))]

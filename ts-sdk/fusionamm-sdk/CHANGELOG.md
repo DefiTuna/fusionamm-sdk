@@ -1,5 +1,47 @@
 # @crypticdot/fusionamm
 
+## 1.0.76
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.76
+- @crypticdot/fusionamm-client@1.0.76
+
+## 1.0.75
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.75
+- @crypticdot/fusionamm-client@1.0.75
+
+## 1.0.74
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.74
+- @crypticdot/fusionamm-client@1.0.74
+
+## 1.0.73
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.73
+- @crypticdot/fusionamm-client@1.0.73
+
+## 1.0.72
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.72
+- @crypticdot/fusionamm-client@1.0.72
+
+## 1.0.71
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.71
+- @crypticdot/fusionamm-client@1.0.71
+
 ## 1.0.70
 
 ### Patch Changes

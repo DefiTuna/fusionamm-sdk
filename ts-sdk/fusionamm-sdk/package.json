@@ -1,6 +1,6 @@
 {
   "name": "@crypticdot/fusionamm-sdk",
-  "version": "1.0.70",
+  "version": "1.0.76",
   "description": "High-level typescript sdk to interact with on-chain FusionAMM program.",
   "type": "module",
   "main": "./dist/index.cjs",
