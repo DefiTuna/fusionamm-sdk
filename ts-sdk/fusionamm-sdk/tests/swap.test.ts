@@ -8,39 +8,16 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import { fetchToken } from "@solana-program/token-2022";
-import type { Address } from "@solana/kit";
+import { fetchFusionPool } from "@crypticdot/fusionamm-client";
+import { MEMO_PROGRAM_ADDRESS } from "@solana-program/memo";
+import { fetchAllMint, fetchToken } from "@solana-program/token-2022";
+import { AccountRole, type Address, type IInstruction } from "@solana/kit";
 import assert from "assert";
 import { beforeAll, describe, it } from "vitest";
-import { swapInstructions } from "../src/swap";
-import { rpc, sendTransaction } from "./utils/mockRpc";
-import { setupPosition, setupFusionPool } from "./utils/program";
-import { setupAta, setupMint } from "./utils/token";
-
-import { setupAtaTE, setupMintTE, setupMintTEFee } from "./utils/tokenExtensions";
-
-const mintTypes = new Map([
-  ["A", setupMint],
-  ["B", setupMint],
-  ["TEA", setupMintTE],
-  ["TEB", setupMintTE],
-  ["TEFee", setupMintTEFee],
-]);
-
-const ataTypes = new Map([
-  ["A", setupAta],
-  ["B", setupAta],
-  ["TEA", setupAtaTE],
-  ["TEB", setupAtaTE],
-  ["TEFee", setupAtaTE],
-]);
-
-const poolTypes = new Map([
-  ["A-B", setupFusionPool],
-  ["A-TEA", setupFusionPool],
-  ["TEA-TEB", setupFusionPool],
-  ["A-TEFee", setupFusionPool],
-]);
+import { fetchTickArrayOrDefault, swapInstructions } from "../src/swap";
+import { rpc, sendTransaction, signer } from "./utils/mockRpc";
+import { setupPosition } from "./utils/program";
+import { ataTypes, mintTypes, poolTypes } from "./utils/poolMatrix";
 
 const positionTypes = new Map([
   ["equally centered", { tickLower: -100, tickUpper: 100 }],
@@ -85,6 +62,47 @@ describe("Swap", () => {
     }
   });
 
+  const assertSwapInstructionShape = async (
+    instructions: IInstruction[],
+    poolAddress: Address,
+    mintAName: string,
+    mintBName: string,
+  ) => {
+    const fusionPool = await fetchFusionPool(rpc, poolAddress);
+    const [tokenA, tokenB] = await fetchAllMint(rpc, [fusionPool.data.tokenMintA, fusionPool.data.tokenMintB]);
+    const tickArrays = await fetchTickArrayOrDefault(rpc, fusionPool);
+    const swapInstruction = instructions.find(ix => ix.programAddress === fusionPool.programAddress);
+
+    assert(swapInstruction, "Expected a FusionAMM swap instruction");
+
+    const instructionAddresses = new Map(swapInstruction.accounts.map(account => [account.address, account.role]));
+
+    for (const address of [
+      tokenA.programAddress,
+      tokenB.programAddress,
+      MEMO_PROGRAM_ADDRESS,
+      signer.address,
+      fusionPool.address,
+      fusionPool.data.tokenMintA,
+      fusionPool.data.tokenMintB,
+      atas.get(mintAName)!,
+      atas.get(mintBName)!,
+      fusionPool.data.tokenVaultA,
+      fusionPool.data.tokenVaultB,
+      ...tickArrays.map(x => x.address),
+    ]) {
+      assert(instructionAddresses.has(address), `Missing swap account ${address}`);
+    }
+
+    assert.strictEqual(
+      tickArrays.filter(x => instructionAddresses.has(x.address)).length,
+      5,
+      "Expected all 5 tick arrays on the swap instruction",
+    );
+    assert.strictEqual(instructionAddresses.get(tickArrays[3].address), AccountRole.WRITABLE);
+    assert.strictEqual(instructionAddresses.get(tickArrays[4].address), AccountRole.WRITABLE);
+  };
+
   const testSwapAExactIn = async (poolName: string) => {
     const [mintAName, mintBName] = poolName.split("-");
     const mintAAddress = mints.get(mintAName)!;
@@ -101,6 +119,7 @@ describe("Swap", () => {
       poolAddress,
       100, // slippage
     );
+    await assertSwapInstructionShape(instructions, poolAddress, mintAName, mintBName);
     await sendTransaction(instructions);
 
     let tokenAAfter = await fetchToken(rpc, ataAAddress);
@@ -127,6 +146,7 @@ describe("Swap", () => {
       poolAddress,
       100, // slippage
     );
+    await assertSwapInstructionShape(instructions, poolAddress, mintAName, mintBName);
     await sendTransaction(instructions);
 
     let tokenAAfter = await fetchToken(rpc, ataAAddress);
@@ -153,6 +173,7 @@ describe("Swap", () => {
       poolAddress,
       100, // slippage
     );
+    await assertSwapInstructionShape(instructions, poolAddress, mintAName, mintBName);
     await sendTransaction(instructions);
 
     let tokenAAfter = await fetchToken(rpc, ataAAddress);
@@ -179,6 +200,7 @@ describe("Swap", () => {
       poolAddress,
       100, // slippage
     );
+    await assertSwapInstructionShape(instructions, poolAddress, mintAName, mintBName);
     await sendTransaction(instructions);
 
     let tokenAAfter = await fetchToken(rpc, ataAAddress);

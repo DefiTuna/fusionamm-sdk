@@ -11,37 +11,12 @@
 import {describe, it, beforeAll} from "vitest";
 import type {Address} from "@solana/kit";
 import {assertAccountExists} from "@solana/kit";
-import {setupAta, setupMint} from "./utils/token";
-import {setupAtaTE, setupMintTE, setupMintTEFee} from "./utils/tokenExtensions";
-import {setupFusionPool} from "./utils/program";
 import {openFullRangePositionInstructions, openPositionInstructions} from "../src/increaseLiquidity";
 import {rpc, sendTransaction} from "./utils/mockRpc";
 import {fetchMaybePosition, getPositionAddress} from "@crypticdot/fusionamm-client";
 import assert from "assert";
 import {getFullRangeTickIndexes, getInitializableTickIndex, priceToTickIndex} from "@crypticdot/fusionamm-core";
-
-const mintTypes = new Map([
-  ["A", setupMint],
-  ["B", setupMint],
-  ["TEA", setupMintTE],
-  ["TEB", setupMintTE],
-  ["TEFee", setupMintTEFee],
-]);
-
-const ataTypes = new Map([
-  ["A", setupAta],
-  ["B", setupAta],
-  ["TEA", setupAtaTE],
-  ["TEB", setupAtaTE],
-  ["TEFee", setupAtaTE],
-]);
-
-const poolTypes = new Map([
-  ["A-B", setupFusionPool],
-  ["A-TEA", setupFusionPool],
-  ["TEA-TEB", setupFusionPool],
-  ["A-TEFee", setupFusionPool],
-]);
+import {ataTypes, mintTypes, poolTypes} from "./utils/poolMatrix";
 
 describe("Open Position Instructions", () => {
   const tickSpacing = 64;

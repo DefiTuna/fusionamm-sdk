@@ -11,36 +11,12 @@
 import {describe, it, beforeAll} from "vitest";
 import {increaseLiquidityInstructions, DEFAULT_FUNDER, setDefaultFunder} from "../src";
 import {rpc, signer, sendTransaction} from "./utils/mockRpc";
-import {setupMint, setupAta} from "./utils/token";
 import {fetchPosition, getPositionAddress} from "@crypticdot/fusionamm-client";
 import {fetchToken} from "@solana-program/token-2022";
 import type {Address} from "@solana/kit";
 import assert from "assert";
-import {setupPosition, setupFusionPool} from "./utils/program";
-import {setupAtaTE, setupMintTE, setupMintTEFee} from "./utils/tokenExtensions";
-
-const mintTypes = new Map([
-  ["A", setupMint],
-  ["B", setupMint],
-  ["TEA", setupMintTE],
-  ["TEB", setupMintTE],
-  ["TEFee", setupMintTEFee],
-]);
-
-const ataTypes = new Map([
-  ["A", setupAta],
-  ["B", setupAta],
-  ["TEA", setupAtaTE],
-  ["TEB", setupAtaTE],
-  ["TEFee", setupAtaTE],
-]);
-
-const poolTypes = new Map([
-  ["A-B", setupFusionPool],
-  ["A-TEA", setupFusionPool],
-  ["TEA-TEB", setupFusionPool],
-  ["A-TEFee", setupFusionPool],
-]);
+import {setupPosition} from "./utils/program";
+import {ataTypes, mintTypes, poolTypes} from "./utils/poolMatrix";
 
 const positionTypes = new Map([
   ["equally centered", {tickLower: -100, tickUpper: 100}],
