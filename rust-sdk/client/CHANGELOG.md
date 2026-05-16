@@ -1,5 +1,51 @@
 # @crypticdot/fusionamm-rust-client
 
+## 1.1.5
+
+### Patch Changes
+
+- 89cb3b5: Fixed typo in fetch_all_tick_array_with_filter
+
+## 1.1.4
+
+### Patch Changes
+
+- 4423944: Removed obsolete tick array account
+
+## 1.1.3
+
+## 1.1.2
+
+## 1.1.1
+
+### Patch Changes
+
+- 60b8753: Made tick array structures publicly visible
+
+## 1.1.0
+
+### Minor Changes
+
+- 09dc355: Sparse tick arrays
+
+## 1.0.83
+
+## 1.0.82
+
+### Patch Changes
+
+- 9a3dd78: Position locking
+
+## 1.0.81
+
+## 1.0.80
+
+## 1.0.79
+
+## 1.0.78
+
+## 1.0.77
+
 ## 1.0.76
 
 ## 1.0.75

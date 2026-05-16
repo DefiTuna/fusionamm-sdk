@@ -1,5 +1,41 @@
 # @crypticdot/fusionamm-rust-tx-sender
 
+## 1.0.25
+
+### Patch Changes
+
+- 6e66ef7: Added dry_run option
+
+## 1.0.24
+
+### Patch Changes
+
+- 1463ab1: Fixed typo
+
+## 1.0.23
+
+### Patch Changes
+
+- 5686ba3: Improved priority fee estimation
+
+## 1.0.22
+
+### Patch Changes
+
+- 59dab2d: Updated tx randomness algorithm
+
+## 1.0.21
+
+### Patch Changes
+
+- a51a0b4: Tx id is always returned; Randomness is added to transactions;
+
+## 1.0.20
+
+### Patch Changes
+
+- ecd3e4d: Removed log target
+
 ## 1.0.19
 
 ### Patch Changes

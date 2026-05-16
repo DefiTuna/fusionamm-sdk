@@ -8,10 +8,13 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import { describe, it, afterEach, vi, beforeAll, afterAll } from "vitest";
-import { deleteAccount, rpc, sendTransaction, signer } from "./utils/mockRpc";
+import type { Address } from "@solana/kit";
+import { address } from "@solana/kit";
 import { fetchMaybeToken, findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { fetchMint, TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
+import assert from "assert";
+import { afterAll, afterEach, beforeAll, describe, it, vi } from "vitest";
+
 import { resetConfiguration, setNativeMintWrappingStrategy } from "../src/config";
 import {
   getAccountExtensions,
@@ -21,9 +24,8 @@ import {
   orderMints,
   prepareTokenAccountsInstructions,
 } from "../src/token";
-import assert from "assert";
-import type { Address } from "@solana/kit";
-import { address } from "@solana/kit";
+
+import { deleteAccount, rpc, sendTransaction, signer } from "./utils/mockRpc";
 import { setupAta, setupMint } from "./utils/token";
 import { setupMintTE, setupMintTEFee } from "./utils/tokenExtensions";
 

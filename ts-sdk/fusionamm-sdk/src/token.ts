@@ -8,16 +8,7 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import {
-  fetchAllMaybeToken,
-  fetchAllMint,
-  findAssociatedTokenPda,
-  getCloseAccountInstruction,
-  getCreateAssociatedTokenInstruction,
-  getInitializeAccount3Instruction,
-  getSyncNativeInstruction,
-  TOKEN_PROGRAM_ADDRESS,
-} from "@solana-program/token";
+import type { TransferFee } from "@crypticdot/fusionamm-core";
 import type {
   Account,
   Address,
@@ -30,17 +21,27 @@ import type {
   TransactionSigner,
 } from "@solana/kit";
 import { address, generateKeyPairSigner, getAddressDecoder, getAddressEncoder, lamports } from "@solana/kit";
-import { NATIVE_MINT_WRAPPING_STRATEGY } from "./config";
 import {
   getCreateAccountInstruction,
   getCreateAccountWithSeedInstruction,
   getTransferSolInstruction,
 } from "@solana-program/system";
+import {
+  fetchAllMaybeToken,
+  fetchAllMint,
+  findAssociatedTokenPda,
+  getCloseAccountInstruction,
+  getCreateAssociatedTokenInstruction,
+  getInitializeAccount3Instruction,
+  getSyncNativeInstruction,
+  TOKEN_PROGRAM_ADDRESS,
+} from "@solana-program/token";
 import { getTokenSize } from "@solana-program/token";
-import { getTokenSize as getTokenSizeWithExtensions, TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
 import type { ExtensionArgs, Mint } from "@solana-program/token-2022";
-import type { TransferFee } from "@crypticdot/fusionamm-core";
+import { getTokenSize as getTokenSizeWithExtensions } from "@solana-program/token-2022";
 import assert from "assert";
+
+import { NATIVE_MINT_WRAPPING_STRATEGY } from "./config";
 
 // This file is not exported through the barrel file
 
@@ -179,10 +180,8 @@ export async function prepareTokenAccountsInstructions(
       amount = lamports(amount + BigInt(spec[NATIVE_MINT]));
     }
 
-    // Generating secure seed takes longer and is not really needed here.
-    // With date, it should only create collisions if the same owner
-    // creates multiple accounts at exactly the same time (in ms)
-    const seed = Date.now().toString();
+    const seedKeyPair = await generateKeyPairSigner();
+    const seed = Buffer.from(getAddressEncoder().encode(seedKeyPair.address)).subarray(0, 16).toString("hex");
     const buffer = await crypto.subtle.digest(
       "SHA-256",
       Buffer.concat([

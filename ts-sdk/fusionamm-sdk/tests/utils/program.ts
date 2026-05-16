@@ -11,6 +11,9 @@
 import {
   fetchAllMaybeTickArray,
   fetchFusionPool,
+  FP_NFT_UPDATE_AUTH,
+  getFusionPoolAddress,
+  getFusionPoolsConfigAddress,
   getIncreaseLiquidityInstruction,
   getInitializeConfigInstruction,
   getInitializePoolInstruction,
@@ -19,9 +22,6 @@ import {
   getPositionAddress,
   getTickArrayAddress,
   getTokenBadgeAddress,
-  getFusionPoolAddress,
-  getFusionPoolsConfigAddress,
-  FP_NFT_UPDATE_AUTH,
 } from "@crypticdot/fusionamm-client";
 import {
   getInitializableTickIndex,
@@ -29,6 +29,7 @@ import {
   increaseLiquidityQuote,
   tickIndexToSqrtPrice,
 } from "@crypticdot/fusionamm-core";
+import { type Address, type IInstruction } from "@solana/kit";
 import { MEMO_PROGRAM_ADDRESS } from "@solana-program/memo";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
@@ -36,7 +37,7 @@ import {
   findAssociatedTokenPda,
   TOKEN_2022_PROGRAM_ADDRESS,
 } from "@solana-program/token-2022";
-import { address, type Address, type IInstruction } from "@solana/kit";
+
 import { getNextKeypair } from "./keypair";
 import { rpc, sendTransaction, signer } from "./mockRpc";
 

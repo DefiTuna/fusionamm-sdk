@@ -1,6 +1,6 @@
 {
   "name": "@crypticdot/fusionamm-sdk",
-  "version": "1.0.76",
+  "version": "1.1.5",
   "description": "High-level typescript sdk to interact with on-chain FusionAMM program.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -28,6 +28,9 @@
     "build": "tsup src/index.ts --format cjs,esm --dts --sourcemap",
     "test": "vitest run tests",
     "deploy": "../../scripts/deploy-npm",
+    "lint": "pnpm eslint && pnpm type-check",
+    "eslint": "eslint \"**/*.ts*\" --fix",
+    "type-check": "tsc -p .",
     "clean": "rimraf dist"
   },
   "dependencies": {
@@ -41,10 +44,13 @@
     "@solana/kit": "^2.1.0"
   },
   "devDependencies": {
+    "@crypticdot/typescript-config": "^1.0.0",
     "@crypticdot/eslint-config": "^1.0.0",
     "@crypticdot/prettier-config": "^1.0.0",
+    "@types/node": "22.9.0",
     "solana-bankrun": "^0.4.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "rimraf": "^6.0.1"
   },
   "repository": {
     "type": "git",

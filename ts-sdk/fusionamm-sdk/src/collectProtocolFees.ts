@@ -3,7 +3,6 @@ import {
   getCollectProtocolFeesInstruction,
   getFusionPoolsConfigAddress,
 } from "@crypticdot/fusionamm-client";
-import { fetchAllMint } from "@solana-program/token-2022";
 import {
   Address,
   GetAccountInfoApi,
@@ -14,9 +13,11 @@ import {
   Rpc,
   TransactionSigner,
 } from "@solana/kit";
+import { MEMO_PROGRAM_ADDRESS } from "@solana-program/memo";
+import { fetchAllMint } from "@solana-program/token-2022";
+
 import { FUNDER } from "./config";
 import { prepareTokenAccountsInstructions } from "./token";
-import { MEMO_PROGRAM_ADDRESS } from "@solana-program/memo";
 
 export async function collectProtocolFeesInstructions(
   rpc: Rpc<GetAccountInfoApi & GetMultipleAccountsApi & GetMinimumBalanceForRentExemptionApi & GetEpochInfoApi>,

@@ -8,17 +8,15 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import { describe, it, beforeAll } from "vitest";
-import { rpc } from "./utils/mockRpc";
-import assert from "assert";
-import {
-  fetchFusionPoolByTokenPairAndTickSpacing,
-  fetchFusionPoolsByTokenPair,
-  FUSIONPOOLS_CONFIG_ADDRESS,
-} from "../src";
 import type { Address } from "@solana/kit";
-import { setupMint } from "./utils/token";
+import assert from "assert";
+import { beforeAll, describe, it } from "vitest";
+
+import { fetchFusionPoolByTokenPairAndTickSpacing, fetchFusionPoolsByTokenPair } from "../src";
+
+import { rpc } from "./utils/mockRpc";
 import { setupFusionPool } from "./utils/program";
+import { setupMint } from "./utils/token";
 
 describe("Fetch Pool", () => {
   let mintA: Address;

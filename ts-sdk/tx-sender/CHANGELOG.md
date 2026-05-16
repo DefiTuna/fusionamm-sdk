@@ -1,5 +1,11 @@
 # @crypticdot/fusionamm-tx-sender
 
+## 1.0.12
+
+### Patch Changes
+
+- 73b6ce3: Added dry_run option
+
 ## 1.0.11
 
 ### Patch Changes

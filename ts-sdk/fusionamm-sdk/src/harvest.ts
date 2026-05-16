@@ -8,33 +8,35 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import type {CollectFeesQuote} from "@crypticdot/fusionamm-core";
-import {collectFeesQuote, getTickArrayStartTickIndex, getTickIndexInArray} from "@crypticdot/fusionamm-core";
-import type {
-  Rpc,
-  GetAccountInfoApi,
-  Address,
-  IInstruction,
-  TransactionSigner,
-  GetMultipleAccountsApi,
-  GetMinimumBalanceForRentExemptionApi,
-  GetEpochInfoApi,
-} from "@solana/kit";
-import {DEFAULT_ADDRESS, FUNDER} from "./config";
 import {
   fetchAllTickArray,
-  fetchPosition,
   fetchFusionPool,
+  fetchPosition,
   getCollectFeesInstruction,
   getPositionAddress,
   getTickArrayAddress,
   getUpdateFeesInstruction,
+  maybeTickToFacade,
 } from "@crypticdot/fusionamm-client";
-import {findAssociatedTokenPda} from "@solana-program/token";
-import {getCurrentTransferFee, prepareTokenAccountsInstructions} from "./token";
-import {fetchAllMaybeMint} from "@solana-program/token-2022";
-import {MEMO_PROGRAM_ADDRESS} from "@solana-program/memo";
+import type { CollectFeesQuote } from "@crypticdot/fusionamm-core";
+import { collectFeesQuote, getTickArrayStartTickIndex, getTickIndexInArray } from "@crypticdot/fusionamm-core";
+import type {
+  Address,
+  GetAccountInfoApi,
+  GetEpochInfoApi,
+  GetMinimumBalanceForRentExemptionApi,
+  GetMultipleAccountsApi,
+  IInstruction,
+  Rpc,
+  TransactionSigner,
+} from "@solana/kit";
+import { MEMO_PROGRAM_ADDRESS } from "@solana-program/memo";
+import { findAssociatedTokenPda } from "@solana-program/token";
+import { fetchAllMaybeMint } from "@solana-program/token-2022";
 import assert from "assert";
+
+import { DEFAULT_ADDRESS, FUNDER } from "./config";
+import { getCurrentTransferFee, prepareTokenAccountsInstructions } from "./token";
 
 // TODO: Transfer hook
 
@@ -125,17 +127,17 @@ export async function harvestPositionInstructions(
   const lowerTick =
     lowerTickArray.data.ticks[
       getTickIndexInArray(position.data.tickLowerIndex, lowerTickArrayStartIndex, fusionPool.data.tickSpacing)
-      ];
+    ];
   const upperTick =
     upperTickArray.data.ticks[
       getTickIndexInArray(position.data.tickUpperIndex, upperTickArrayStartIndex, fusionPool.data.tickSpacing)
-      ];
+    ];
 
   const feesQuote = collectFeesQuote(
     fusionPool.data,
     position.data,
-    lowerTick,
-    upperTick,
+    maybeTickToFacade(lowerTick),
+    maybeTickToFacade(upperTick),
     getCurrentTransferFee(mintA, currentEpoch.epoch),
     getCurrentTransferFee(mintB, currentEpoch.epoch),
   );
@@ -146,7 +148,7 @@ export async function harvestPositionInstructions(
     requiredMints.add(fusionPool.data.tokenMintB);
   }
 
-  const {createInstructions, cleanupInstructions, tokenAccountAddresses} = await prepareTokenAccountsInstructions(
+  const { createInstructions, cleanupInstructions, tokenAccountAddresses } = await prepareTokenAccountsInstructions(
     rpc,
     authority,
     Array.from(requiredMints),

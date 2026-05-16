@@ -10,20 +10,21 @@
 
 import type {
   CompilableTransactionMessage,
-  IInstruction,
-  Rpc,
-  SolanaRpcApi,
-  TransactionSigner,
   IAccountLookupMeta,
   IAccountMeta,
+  IInstruction,
   ITransactionMessageWithFeePayerSigner,
+  Rpc,
+  SolanaRpcApi,
   TransactionMessageWithBlockhashLifetime,
+  TransactionSigner,
   TransactionVersion,
 } from "@solana/kit";
 import { getComputeUnitEstimateForTransactionMessageFactory } from "@solana/kit";
+
+import { processComputeBudgetForTxMessage } from "./computeBudget";
 import { type TransactionConfig } from "./config";
 import { processJitoTipForTxMessage } from "./jito";
-import { processComputeBudgetForTxMessage } from "./computeBudget";
 
 export type TxMessage = ITransactionMessageWithFeePayerSigner<string, TransactionSigner<string>> &
   Omit<

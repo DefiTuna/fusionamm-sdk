@@ -8,17 +8,19 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import {describe, it, beforeAll} from "vitest";
-import type {Address} from "@solana/kit";
-import {assertAccountExists} from "@solana/kit";
-import {setupAta, setupMint} from "./utils/token";
-import {setupAtaTE, setupMintTE, setupMintTEFee} from "./utils/tokenExtensions";
-import {setupFusionPool} from "./utils/program";
-import {openFullRangePositionInstructions, openPositionInstructions} from "../src/increaseLiquidity";
-import {rpc, sendTransaction} from "./utils/mockRpc";
-import {fetchMaybePosition, getPositionAddress} from "@crypticdot/fusionamm-client";
+import { fetchMaybePosition, getPositionAddress } from "@crypticdot/fusionamm-client";
+import { getFullRangeTickIndexes, getInitializableTickIndex, priceToTickIndex } from "@crypticdot/fusionamm-core";
+import { Address, generateKeyPairSigner } from "@solana/kit";
+import { assertAccountExists } from "@solana/kit";
 import assert from "assert";
-import {getFullRangeTickIndexes, getInitializableTickIndex, priceToTickIndex} from "@crypticdot/fusionamm-core";
+import { beforeAll, describe, it } from "vitest";
+
+import { openFullRangePositionInstructions, openPositionInstructions } from "../src/increaseLiquidity";
+
+import { rpc, sendTransaction } from "./utils/mockRpc";
+import { setupFusionPool } from "./utils/program";
+import { setupAta, setupMint } from "./utils/token";
+import { setupAtaTE, setupMintTE, setupMintTEFee } from "./utils/tokenExtensions";
 
 const mintTypes = new Map([
   ["A", setupMint],
@@ -57,7 +59,7 @@ describe("Open Position Instructions", () => {
 
     for (const [name, setup] of ataTypes) {
       const mint = mints.get(name)!;
-      atas.set(name, await setup(mint, {amount: tokenBalance}));
+      atas.set(name, await setup(mint, { amount: tokenBalance }));
     }
 
     for (const [name, setup] of poolTypes) {
@@ -70,14 +72,15 @@ describe("Open Position Instructions", () => {
 
   const testOpenPositionInstructions = async (poolName: string, lowerPrice: number, upperPrice: number) => {
     const fusionPool = pools.get(poolName)!;
-    const param = {liquidity: 10_000n};
+    const param = { liquidity: 10_000n };
 
-    const {instructions, positionMint} = await openPositionInstructions(
+    const { instructions, positionMint } = await openPositionInstructions(
       rpc,
+      await generateKeyPairSigner(),
       fusionPool,
       param,
-      {price: lowerPrice},
-      {price: upperPrice},
+      { price: lowerPrice },
+      { price: upperPrice },
     );
 
     const positionAddress = await getPositionAddress(positionMint);
@@ -100,9 +103,14 @@ describe("Open Position Instructions", () => {
 
   const testOpenFullRangePositionInstructions = async (poolName: string) => {
     const fusionPool = pools.get(poolName)!;
-    const param = {liquidity: 10_000n};
+    const param = { liquidity: 10_000n };
 
-    const {instructions, positionMint} = await openFullRangePositionInstructions(rpc, fusionPool, param);
+    const { instructions, positionMint } = await openFullRangePositionInstructions(
+      rpc,
+      await generateKeyPairSigner(),
+      fusionPool,
+      param,
+    );
 
     const positionAddress = await getPositionAddress(positionMint);
     const positionBefore = await fetchMaybePosition(rpc, positionAddress[0]);
@@ -132,44 +140,49 @@ describe("Open Position Instructions", () => {
   }
 
   it("Should compute correct initialization costs if both tick arrays are already initialized", async () => {
-    const param = {liquidity: 10_000n};
+    const param = { liquidity: 10_000n };
 
-    const {initializationCost} = await openPositionInstructions(
+    const { initializationCost } = await openPositionInstructions(
       rpc,
+      await generateKeyPairSigner(),
       pools.get("A-B")!,
       param,
-      {price: 0.95},
-      {price: 1.05},
+      { price: 0.95 },
+      { price: 1.05 },
     );
 
     assert.strictEqual(initializationCost, 0n);
   });
 
   it("Should compute correct initialization costs if 1 tick array is already initialized", async () => {
-    const param = {liquidity: 10_000n};
+    const param = { liquidity: 10_000n };
 
-    const {initializationCost} = await openPositionInstructions(
+    const { initializationCost } = await openPositionInstructions(
       rpc,
+      await generateKeyPairSigner(),
       pools.get("A-B")!,
       param,
-      {price: 0.05},
-      {price: 1.05},
+      { price: 0.05 },
+      { price: 1.05 },
     );
 
-    assert.strictEqual(initializationCost, 70407360n);
+    // assert.strictEqual(initializationCost, 70407360n); // Fixed tick array
+    assert.strictEqual(initializationCost, 1809600n); // Variable tick array
   });
 
   it("Should compute correct initialization costs if no tick arrays are already initialized", async () => {
-    const param = {liquidity: 10_000n};
+    const param = { liquidity: 10_000n };
 
-    const {initializationCost} = await openPositionInstructions(
+    const { initializationCost } = await openPositionInstructions(
       rpc,
+      await generateKeyPairSigner(),
       pools.get("A-B")!,
       param,
-      {price: 0.01},
-      {price: 5},
+      { price: 0.01 },
+      { price: 5 },
     );
 
-    assert.strictEqual(initializationCost, 140814720n);
+    // assert.strictEqual(initializationCost, 140814720n); // Fixed tick array
+    assert.strictEqual(initializationCost, 3619200n); // Variable tick array
   });
 });

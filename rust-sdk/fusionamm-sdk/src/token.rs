@@ -27,7 +27,6 @@ use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions};
 use spl_token_2022::state::{Account, Mint};
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::{collections::HashMap, error::Error};
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -151,14 +150,9 @@ pub(crate) async fn prepare_token_accounts_instructions(
             lamports += balance;
         }
 
-        // Generating secure seed takes longer and is not really needed here.
-        // With date, it should only create collisions if the same owner
-        // creates multiple accounts at exactly the same time (in ms)
-        let seed = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or(Duration::from_secs(0))
-            .as_millis()
-            .to_string();
+        // Use a random 16-byte hex string as seed for uniqueness (32 chars, <= 32 bytes limit)
+        let pk_bytes = Keypair::new().pubkey().to_bytes();
+        let seed: String = pk_bytes[..16].iter().map(|b| format!("{:02x}", b)).collect::<String>();
         let pubkey = Pubkey::new_from_array(hashv(&[owner.to_bytes().as_ref(), seed.as_bytes(), TOKEN_PROGRAM_ID.to_bytes().as_ref()]).to_bytes());
 
         create_instructions.push(create_account_with_seed(&owner, &pubkey, &owner, &seed, lamports, Account::LEN as u64, &TOKEN_PROGRAM_ID));

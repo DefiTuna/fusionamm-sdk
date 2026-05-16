@@ -8,20 +8,22 @@
 // See the LICENSE file in the project root for license information.
 //
 
+import type { Address, IInstruction } from "@solana/kit";
 import { getCreateAccountInstruction, getTransferSolInstruction } from "@solana-program/system";
 import {
-  getMintSize,
-  getInitializeMint2Instruction,
-  TOKEN_PROGRAM_ADDRESS,
-  getCreateAssociatedTokenIdempotentInstruction,
   findAssociatedTokenPda,
+  getCreateAssociatedTokenIdempotentInstruction,
+  getInitializeMint2Instruction,
+  getMintSize,
   getMintToInstruction,
   getSyncNativeInstruction,
+  TOKEN_PROGRAM_ADDRESS,
 } from "@solana-program/token";
-import type { Address, IInstruction } from "@solana/kit";
-import { signer, sendTransaction } from "./mockRpc";
+
 import { NATIVE_MINT } from "../../src/token";
+
 import { getNextKeypair } from "./keypair";
+import { sendTransaction, signer } from "./mockRpc";
 
 export async function setupAta(mint: Address, config: { amount?: number | bigint } = {}): Promise<Address> {
   const ata = await findAssociatedTokenPda({

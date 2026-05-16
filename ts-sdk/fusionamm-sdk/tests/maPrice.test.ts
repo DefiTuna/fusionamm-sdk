@@ -9,14 +9,16 @@
 //
 
 import { fetchFusionPool } from "@crypticdot/fusionamm-client";
+import { sqrtPriceToPrice } from "@crypticdot/fusionamm-core";
 import { Address } from "@solana/kit";
 import { beforeAll, describe, expect, it } from "vitest";
+
 import { swapInstructions } from "../src";
+
 import { rpc, sendTransaction } from "./utils/mockRpc";
+import { setupFusionPool, setupPosition } from "./utils/program";
 import { moveTimeForward } from "./utils/time";
 import { setupAta, setupMint } from "./utils/token";
-import { setupPosition, setupFusionPool } from "./utils/program";
-import { sqrtPriceToPrice } from "@crypticdot/fusionamm-core";
 
 describe("MA price", () => {
   let mintA: Address;

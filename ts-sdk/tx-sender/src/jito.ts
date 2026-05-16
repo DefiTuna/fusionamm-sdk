@@ -10,8 +10,9 @@
 
 import type { Address, TransactionSigner } from "@solana/kit";
 import { address, lamports, prependTransactionMessageInstruction } from "@solana/kit";
-import { type Percentile, TransactionConfig } from "./config";
 import { getTransferSolInstruction } from "@solana-program/system";
+
+import { type Percentile, TransactionConfig } from "./config";
 import type { TxMessage } from "./priorityFees";
 
 export async function processJitoTipForTxMessage(

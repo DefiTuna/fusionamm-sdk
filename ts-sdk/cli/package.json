@@ -2,12 +2,15 @@
   "name": "@crypticdot/fusionamm-cli",
   "version": "1.0.0",
   "description": "FusionAMM command-line interface",
-  "type": "module",
   "private": true,
+  "type": "module",
   "bin": "./bin/run.js",
   "scripts": {
     "build": "tsc --noEmit",
-    "start": "./bin/dev.js"
+    "start": "./bin/dev.js",
+    "lint": "pnpm eslint && pnpm type-check",
+    "eslint": "eslint \"**/*.ts*\" --fix",
+    "type-check": "tsc -p ."
   },
   "dependencies": {
     "@crypticdot/fusionamm-core": "workspace:*",
@@ -22,6 +25,7 @@
     "dotenv": "^16.4.7"
   },
   "devDependencies": {
+    "@crypticdot/typescript-config": "^1.0.0",
     "@crypticdot/eslint-config": "^1.0.0",
     "@crypticdot/prettier-config": "^1.0.0",
     "@types/node": "^22.15.2",

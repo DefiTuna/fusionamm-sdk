@@ -1,7 +1,12 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "@crypticdot/typescript-config/base.json",
   "compilerOptions": {
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "target": "ES2022",
+    "paths": {
+      "@crypticdot/fusionamm-core": ["../client/core"],
+      "@crypticdot/fusionamm-client": ["../client/src"],
+    }
   },
-  "include": ["./src/**/*.ts"]
+  "include": ["./src/**/*.ts", "./tests/**/*.ts"]
 }

@@ -8,15 +8,16 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import { fetchToken } from "@solana-program/token-2022";
 import type { Address } from "@solana/kit";
+import { fetchToken } from "@solana-program/token-2022";
 import assert from "assert";
 import { beforeAll, describe, it } from "vitest";
-import { swapInstructions } from "../src/swap";
-import { rpc, sendTransaction } from "./utils/mockRpc";
-import { setupPosition, setupFusionPool } from "./utils/program";
-import { setupAta, setupMint } from "./utils/token";
 
+import { swapInstructions } from "../src/swap";
+
+import { rpc, sendTransaction } from "./utils/mockRpc";
+import { setupFusionPool, setupPosition } from "./utils/program";
+import { setupAta, setupMint } from "./utils/token";
 import { setupAtaTE, setupMintTE, setupMintTEFee } from "./utils/tokenExtensions";
 
 const mintTypes = new Map([
@@ -92,8 +93,8 @@ describe("Swap", () => {
     const ataBAddress = atas.get(mintBName)!;
     const poolAddress = pools.get(poolName)!;
 
-    let tokenABefore = await fetchToken(rpc, ataAAddress);
-    let tokenBBefore = await fetchToken(rpc, ataBAddress);
+    const tokenABefore = await fetchToken(rpc, ataAAddress);
+    const tokenBBefore = await fetchToken(rpc, ataBAddress);
 
     const { instructions, quote } = await swapInstructions(
       rpc,
@@ -103,8 +104,8 @@ describe("Swap", () => {
     );
     await sendTransaction(instructions);
 
-    let tokenAAfter = await fetchToken(rpc, ataAAddress);
-    let tokenBAfter = await fetchToken(rpc, ataBAddress);
+    const tokenAAfter = await fetchToken(rpc, ataAAddress);
+    const tokenBAfter = await fetchToken(rpc, ataBAddress);
 
     assert.strictEqual(-quote.tokenIn, tokenAAfter.data.amount - tokenABefore.data.amount);
 
@@ -118,8 +119,8 @@ describe("Swap", () => {
     const ataBAddress = atas.get(mintBName)!;
     const poolAddress = pools.get(poolName)!;
 
-    let tokenABefore = await fetchToken(rpc, ataAAddress);
-    let tokenBBefore = await fetchToken(rpc, ataBAddress);
+    const tokenABefore = await fetchToken(rpc, ataAAddress);
+    const tokenBBefore = await fetchToken(rpc, ataBAddress);
 
     const { instructions, quote } = await swapInstructions(
       rpc,
@@ -129,8 +130,8 @@ describe("Swap", () => {
     );
     await sendTransaction(instructions);
 
-    let tokenAAfter = await fetchToken(rpc, ataAAddress);
-    let tokenBAfter = await fetchToken(rpc, ataBAddress);
+    const tokenAAfter = await fetchToken(rpc, ataAAddress);
+    const tokenBAfter = await fetchToken(rpc, ataBAddress);
 
     assert.strictEqual(quote.tokenOut, tokenAAfter.data.amount - tokenABefore.data.amount);
 
@@ -144,8 +145,8 @@ describe("Swap", () => {
     const ataBAddress = atas.get(mintBName)!;
     const poolAddress = pools.get(poolName)!;
 
-    let tokenABefore = await fetchToken(rpc, ataAAddress);
-    let tokenBBefore = await fetchToken(rpc, ataBAddress);
+    const tokenABefore = await fetchToken(rpc, ataAAddress);
+    const tokenBBefore = await fetchToken(rpc, ataBAddress);
 
     const { instructions, quote } = await swapInstructions(
       rpc,
@@ -155,8 +156,8 @@ describe("Swap", () => {
     );
     await sendTransaction(instructions);
 
-    let tokenAAfter = await fetchToken(rpc, ataAAddress);
-    let tokenBAfter = await fetchToken(rpc, ataBAddress);
+    const tokenAAfter = await fetchToken(rpc, ataAAddress);
+    const tokenBAfter = await fetchToken(rpc, ataBAddress);
 
     assert.strictEqual(quote.tokenEstOut, tokenAAfter.data.amount - tokenABefore.data.amount);
 
@@ -170,8 +171,8 @@ describe("Swap", () => {
     const ataBAddress = atas.get(mintBName)!;
     const poolAddress = pools.get(poolName)!;
 
-    let tokenABefore = await fetchToken(rpc, ataAAddress);
-    let tokenBBefore = await fetchToken(rpc, ataBAddress);
+    const tokenABefore = await fetchToken(rpc, ataAAddress);
+    const tokenBBefore = await fetchToken(rpc, ataBAddress);
 
     const { instructions, quote } = await swapInstructions(
       rpc,
@@ -181,8 +182,8 @@ describe("Swap", () => {
     );
     await sendTransaction(instructions);
 
-    let tokenAAfter = await fetchToken(rpc, ataAAddress);
-    let tokenBAfter = await fetchToken(rpc, ataBAddress);
+    const tokenAAfter = await fetchToken(rpc, ataAAddress);
+    const tokenBAfter = await fetchToken(rpc, ataBAddress);
 
     assert.strictEqual(-quote.tokenEstIn, tokenAAfter.data.amount - tokenABefore.data.amount);
 

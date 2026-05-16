@@ -1,24 +1,26 @@
 import {
-  fetchMaybeLimitOrder,
   fetchAllLimitOrderWithFilter,
-  LimitOrder,
-  FusionPool,
   fetchFusionPool,
-  TickArray,
-  getTickArrayAddress,
+  fetchMaybeLimitOrder,
   fetchTickArray,
+  FusionPool,
+  getTickArrayAddress,
+  LimitOrder,
+  maybeTickToFacade,
+  TickArray,
 } from "@crypticdot/fusionamm-client";
-import BaseCommand, { addressArg, addressFlag } from "../base";
-import { rpc } from "../rpc";
-import { fetchLimitOrdersForOwner, fetchLimitOrdersInFusionPool } from "@crypticdot/fusionamm-sdk";
-import { Account, Address } from "@solana/kit";
 import {
   decreaseLimitOrderQuote,
   getTickArrayStartTickIndex,
   getTickIndexInArray,
   tickIndexToPrice,
 } from "@crypticdot/fusionamm-core";
+import { fetchLimitOrdersForOwner, fetchLimitOrdersInFusionPool } from "@crypticdot/fusionamm-sdk";
+import { Account, Address } from "@solana/kit";
 import { fetchMint, Mint } from "@solana-program/token-2022";
+
+import BaseCommand, { addressArg, addressFlag } from "../base";
+import { rpc } from "../rpc";
 
 export default class FetchLimitOrder extends BaseCommand {
   static override args = {
@@ -76,7 +78,12 @@ export default class FetchLimitOrder extends BaseCommand {
     );
     const tick = tickArray.data.ticks[tickIndexInArray];
 
-    const quote = decreaseLimitOrderQuote(fusionPool.data, limitOrder.data, tick, limitOrder.data.amount);
+    const quote = decreaseLimitOrderQuote(
+      fusionPool.data,
+      limitOrder.data,
+      maybeTickToFacade(tick),
+      limitOrder.data.amount,
+    );
     const fill =
       (limitOrder.data.aToB
         ? Number(limitOrder.data.amount - quote.amountOutA)
@@ -106,17 +113,17 @@ export default class FetchLimitOrder extends BaseCommand {
       console.log("Fetching limit orders...");
       if (flags.owner) {
         const limitOrders = await fetchLimitOrdersForOwner(rpc, flags.owner);
-        for (let limitOrder of limitOrders) {
+        for (const limitOrder of limitOrders) {
           if (!flags.pool || (flags.pool && limitOrder.data.fusionPool == flags.pool)) {
             await this.logLimitOrder(limitOrder);
           }
         }
       } else if (flags.pool) {
         const limitOrders = await fetchLimitOrdersInFusionPool(rpc, flags.pool);
-        for (let limitOrder of limitOrders) await this.logLimitOrder(limitOrder);
+        for (const limitOrder of limitOrders) await this.logLimitOrder(limitOrder);
       } else {
         const limitOrders = await fetchAllLimitOrderWithFilter(rpc);
-        for (let limitOrder of limitOrders) await this.logLimitOrder(limitOrder);
+        for (const limitOrder of limitOrders) await this.logLimitOrder(limitOrder);
       }
     }
   }

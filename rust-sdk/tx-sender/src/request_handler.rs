@@ -103,8 +103,8 @@ impl RequestHandler {
             match serde_json::from_str::<T>(&body_text) {
                 Ok(data) => Ok(data),
                 Err(e) => {
-                    error!(target: "log", "Deserialization error: {}", e);
-                    error!(target: "log", "Raw JSON: {}", body_text);
+                    error!("Deserialization error: {}", e);
+                    error!("Raw JSON: {}", body_text);
                     Err(e.into())
                 }
             }

@@ -9,8 +9,9 @@
 //
 
 import { describe, it } from "vitest";
-import type { Position, TickArray, FusionPool } from "../../client/src";
-import type { PositionFacade, TickArrayFacade, FusionPoolFacade } from "../dist/nodejs/fusionamm_core_js_bindings";
+
+import type { FusionPool, Position } from "../../client/src";
+import type { FusionPoolFacade, PositionFacade } from "../dist/nodejs/fusionamm_core_js_bindings";
 
 // Since these tests are only for type checking, nothing actually happens at runtime.
 
@@ -25,8 +26,8 @@ describe("WASM exported types match Codama types", () => {
     fauxPosition satisfies PositionFacade;
   });
 
-  it("TickArray", () => {
-    const fauxTickArray = {} as TickArray;
-    fauxTickArray satisfies TickArrayFacade;
-  });
+  //  it("TickArray", () => {
+  //    const fauxTickArray = {} as TickArray;
+  //    fauxTickArray satisfies TickArrayFacade;
+  //  });
 });

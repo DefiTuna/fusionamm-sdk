@@ -1,5 +1,5 @@
 import { Args, Command, Flags } from "@oclif/core";
-import { address, Address, getBase58Codec, SolanaError } from "@solana/kit";
+import { Address, address, getBase58Codec, SolanaError } from "@solana/kit";
 
 export const bigintArg = Args.custom<bigint>({
   parse: async input => BigInt(input),

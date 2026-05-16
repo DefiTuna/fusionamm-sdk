@@ -5,9 +5,11 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import type { GetProgramAccountsMemcmpFilter, Account, GetProgramAccountsApi, Rpc, Address } from "@solana/kit";
-import { getBase58Decoder, getAddressEncoder } from "@solana/kit";
-import { LIMIT_ORDER_DISCRIMINATOR, getLimitOrderDecoder, LimitOrder, FUSIONAMM_PROGRAM_ADDRESS } from "../generated";
+import type { Account, Address, GetProgramAccountsApi, GetProgramAccountsMemcmpFilter, Rpc } from "@solana/kit";
+import { getAddressEncoder, getBase58Decoder } from "@solana/kit";
+
+import { FUSIONAMM_PROGRAM_ADDRESS, getLimitOrderDecoder, LIMIT_ORDER_DISCRIMINATOR, LimitOrder } from "../generated";
+
 import { fetchDecodedProgramAccounts } from "./utils";
 
 type LimitOrderFilter = GetProgramAccountsMemcmpFilter & {

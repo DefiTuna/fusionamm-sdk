@@ -1,20 +1,63 @@
 use fusionamm_client::{FusionPool, TickArray};
 use fusionamm_core::{
     get_order_book_side, get_tick_array_start_tick_index, invert_sqrt_price, price_to_sqrt_price, price_to_tick_index, sqrt_price_to_price,
-    sqrt_price_to_tick_index, tick_index_to_price, FusionPoolFacade, OrderBookEntry, TickArrayFacade, TickArraySequence, MAX_TICK_INDEX,
+    sqrt_price_to_tick_index, tick_index_to_price, FusionPoolFacade, OrderBookEntry, TickArrayFacade, TickArraySequence, TickFacade, MAX_TICK_INDEX,
     MIN_TICK_INDEX, TICK_ARRAY_SIZE,
 };
+use solana_pubkey::Pubkey;
 use std::collections::HashMap;
 
 const DEFAULT_ORDER_BOOK_ENTRIES: u32 = 12;
 const TICK_EDGE_OFFSET: i32 = 10000;
+
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+struct TickArrayMock {
+    pub discriminator: [u8; 8],
+    pub start_tick_index: i32,
+    #[serde(with = "serde_with::As::<serde_with::DisplayFromStr>")]
+    pub fusion_pool: Pubkey,
+    #[serde(with = "serde_big_array::BigArray")]
+    pub ticks: [TickFacade; TICK_ARRAY_SIZE],
+}
+
+impl From<TickArrayMock> for TickArray {
+    fn from(mock: TickArrayMock) -> Self {
+        // We need to convert TickFacade to MaybeTick.
+        // TickFacade has 'initialized' bool.
+        let ticks = mock.ticks.map(|t| {
+            if t.initialized {
+                fusionamm_client::MaybeTick::Initialized(fusionamm_client::TickData {
+                    liquidity_net: t.liquidity_net,
+                    liquidity_gross: t.liquidity_gross,
+                    fee_growth_outside_a: t.fee_growth_outside_a,
+                    fee_growth_outside_b: t.fee_growth_outside_b,
+                    age: t.age,
+                    open_orders_input: t.open_orders_input,
+                    part_filled_orders_input: t.part_filled_orders_input,
+                    part_filled_orders_remaining_input: t.part_filled_orders_remaining_input,
+                    fulfilled_a_to_b_orders_input: t.fulfilled_a_to_b_orders_input,
+                    fulfilled_b_to_a_orders_input: t.fulfilled_b_to_a_orders_input,
+                })
+            } else {
+                fusionamm_client::MaybeTick::Uninitialized
+            }
+        });
+
+        TickArray {
+            discriminator: mock.discriminator,
+            start_tick_index: mock.start_tick_index,
+            fusion_pool: mock.fusion_pool,
+            ticks,
+        }
+    }
+}
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct PoolData {
     mint_a_dec: u8,
     mint_b_dec: u8,
     pool: FusionPool,
-    tick_arrays: Vec<TickArray>,
+    tick_arrays: Vec<TickArrayMock>,
 }
 
 #[test]
@@ -25,6 +68,8 @@ fn test_order_book_performance() {
     let mut pool_data: PoolData = serde_json::from_reader(file).unwrap();
 
     pool_data.tick_arrays.sort_by_key(|k| k.start_tick_index);
+
+    let tick_arrays: Vec<TickArray> = pool_data.tick_arrays.into_iter().map(|t| t.into()).collect();
 
     // Optional: print PID if you want to attach manually
     println!("PID: {}", std::process::id());
@@ -40,7 +85,7 @@ fn test_order_book_performance() {
     */
     let start = std::time::Instant::now();
 
-    calc_order_book(&pool_data.pool, &pool_data.tick_arrays, (pool_data.mint_a_dec, pool_data.mint_b_dec));
+    calc_order_book(&pool_data.pool, &tick_arrays, (pool_data.mint_a_dec, pool_data.mint_b_dec));
 
     println!("Done in {:?}", start.elapsed());
 
@@ -55,7 +100,7 @@ fn test_order_book_performance() {
     }*/
 }
 
-fn calc_order_book(pool: &FusionPool, tick_arrays: &Vec<TickArray>, decimals: (u8, u8)) {
+fn calc_order_book(pool: &FusionPool, tick_arrays: &[TickArray], decimals: (u8, u8)) {
     let sqrt_price = pool.sqrt_price;
 
     let pool_price = sqrt_price_to_price(sqrt_price, decimals.0, decimals.1);

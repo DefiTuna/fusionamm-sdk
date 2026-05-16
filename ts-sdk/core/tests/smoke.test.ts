@@ -8,12 +8,14 @@
 // See the LICENSE file in the project root for license information.
 //
 
+import assert from "assert";
 import { describe, it } from "vitest";
+
 import type {
+  FusionPoolFacade,
   PositionFacade,
   TickArrayFacade,
   TickFacade,
-  FusionPoolFacade,
 } from "../dist/nodejs/fusionamm_core_js_bindings";
 import {
   collectFeesQuote,
@@ -22,7 +24,6 @@ import {
   swapQuoteByInputToken,
   swapQuoteByOutputToken,
 } from "../dist/nodejs/fusionamm_core_js_bindings";
-import assert from "assert";
 
 // Assumption: if a complex test cases produces the same result as the rust test,
 // then the WASM bundle is working correctly and we don't need to test every single

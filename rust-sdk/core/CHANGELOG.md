@@ -1,5 +1,43 @@
 # @crypticdot/fusionamm-rust-core
 
+## 1.1.5
+
+## 1.1.4
+
+### Patch Changes
+
+- 4423944: Removed obsolete tick array account
+
+## 1.1.3
+
+### Patch Changes
+
+- ee352f7: TickArraySequence::empty() no longer returns Result<>
+
+## 1.1.2
+
+### Patch Changes
+
+- f55609f: Allow empty TickArraySequence for order book
+
+## 1.1.1
+
+## 1.1.0
+
+## 1.0.83
+
+## 1.0.82
+
+## 1.0.81
+
+## 1.0.80
+
+## 1.0.79
+
+## 1.0.78
+
+## 1.0.77
+
 ## 1.0.76
 
 ### Patch Changes

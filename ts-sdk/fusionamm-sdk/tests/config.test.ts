@@ -8,21 +8,22 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import { describe, it, afterAll } from "vitest";
+import { createKeyPairSignerFromPrivateKeyBytes } from "@solana/kit";
+import assert from "assert";
+import { afterAll, describe, it } from "vitest";
+
 import {
   DEFAULT_ADDRESS,
+  DEFAULT_NATIVE_MINT_WRAPPING_STRATEGY,
+  DEFAULT_SLIPPAGE_TOLERANCE_BPS,
   FUNDER,
-  SLIPPAGE_TOLERANCE_BPS,
+  NATIVE_MINT_WRAPPING_STRATEGY,
   resetConfiguration,
   setDefaultFunder,
   setDefaultSlippageToleranceBps,
   setNativeMintWrappingStrategy,
-  NATIVE_MINT_WRAPPING_STRATEGY,
-  DEFAULT_SLIPPAGE_TOLERANCE_BPS,
-  DEFAULT_NATIVE_MINT_WRAPPING_STRATEGY,
+  SLIPPAGE_TOLERANCE_BPS,
 } from "../src";
-import assert from "assert";
-import { createKeyPairSignerFromPrivateKeyBytes } from "@solana/kit";
 
 // Tests in order, which is important here
 

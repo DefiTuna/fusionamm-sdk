@@ -9,8 +9,9 @@
 //
 
 use crate::{
-    get_initializable_tick_index, get_next_initializable_tick_index, get_prev_initializable_tick_index, CoreError, TickArrayFacade, TickFacade,
-    INVALID_TICK_ARRAY_SEQUENCE, INVALID_TICK_INDEX, MAX_TICK_INDEX, MIN_TICK_INDEX, TICK_ARRAY_SIZE, TICK_INDEX_OUT_OF_BOUNDS, TICK_SEQUENCE_EMPTY,
+    get_full_range_tick_indexes, get_initializable_tick_index, get_next_initializable_tick_index, get_prev_initializable_tick_index, CoreError,
+    TickArrayFacade, TickFacade, INVALID_TICK_ARRAY_SEQUENCE, INVALID_TICK_INDEX, MAX_TICK_INDEX, MIN_TICK_INDEX, TICK_ARRAY_SIZE,
+    TICK_INDEX_OUT_OF_BOUNDS, TICK_SEQUENCE_EMPTY,
 };
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
@@ -53,6 +54,17 @@ impl TickArraySequence {
             ticks,
             tick_spacing,
         })
+    }
+
+    pub fn empty(tick_spacing: u16) -> Self {
+        let full_range = get_full_range_tick_indexes(tick_spacing);
+
+        Self {
+            start_tick_index: full_range.tick_lower_index,
+            end_tick_index: full_range.tick_upper_index,
+            ticks: HashMap::new(),
+            tick_spacing,
+        }
     }
 
     /// Returns the first valid tick index in the sequence.

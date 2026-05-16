@@ -157,14 +157,14 @@ where
             let request = "wss://bundles.jito.wtf/api/v1/bundles/tip_stream".into_client_request().unwrap();
 
             let (ws_stream, _) = connect_async(request).await.expect("Failed to connect");
-            info!(target: "log", "Connected to Jito tip stream");
+            info!("Connected to Jito tip stream");
 
             let (_, mut read) = ws_stream.split();
 
             while let Some(msg) = read.next().await {
                 match msg {
                     Ok(Message::Text(text)) => {
-                        //info!(target: "log", "Received: {}", text);
+                        //info!("Received: {}", text);
                         let tips = serde_json::from_slice::<Vec<JitoTipInfo>>(text.as_bytes()).expect("Failed to parse Jito tip stream");
                         if !tips.is_empty() {
                             connect_attempts = 0;
@@ -172,7 +172,7 @@ where
                         }
                     }
                     Ok(_) => {}
-                    Err(e) => error!(target: "log", "Jito tip stream webSocket error: {}", e),
+                    Err(e) => error!("Jito tip stream webSocket error: {}", e),
                 }
             }
 
@@ -195,7 +195,7 @@ pub fn get_jito_api_url_by_region(region: &str) -> String {
         "Tokyo" => "https://tokyo.mainnet.block-engine.jito.wtf".to_string(),
         "Default" => "https://mainnet.block-engine.jito.wtf".to_string(),
         _ => {
-            warn!(target: "log", "Unknown Jito region provided: '{}', using the default one.", region);
+            warn!("Unknown Jito region provided: '{}', using the default one.", region);
             "https://mainnet.block-engine.jito.wtf".to_string()
         }
     }

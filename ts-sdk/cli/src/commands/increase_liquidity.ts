@@ -6,11 +6,12 @@ import {
   openPositionInstructions,
 } from "@crypticdot/fusionamm-sdk";
 import { sendTransaction } from "@crypticdot/fusionamm-tx-sender";
+import { Flags } from "@oclif/core";
+import { generateKeyPairSigner, IInstruction } from "@solana/kit";
+import { fetchAllMint } from "@solana-program/token-2022";
+
 import BaseCommand, { addressArg, addressFlag, bigintFlag, priceFlag } from "../base";
 import { rpc, signer } from "../rpc";
-import { fetchAllMint } from "@solana-program/token-2022";
-import { IInstruction } from "@solana/kit";
-import { Flags } from "@oclif/core";
 
 export default class IncreaseLiquidity extends BaseCommand {
   static override args = {
@@ -93,8 +94,12 @@ export default class IncreaseLiquidity extends BaseCommand {
         throw new Error(`upperPrice must be specified`);
       }
 
+      const positionMintKeyPair = await generateKeyPairSigner();
+      positionMint = positionMintKeyPair.address;
+
       const openInstructions = await openPositionInstructions(
         rpc,
+        positionMintKeyPair,
         fusionPool.address,
         increaseParam,
         { price: flags.lowerPrice },

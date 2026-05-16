@@ -15,3 +15,4 @@ export * from "./tickArray";
 export * from "./tokenBadge";
 export * from "./fusionPool";
 export * from "./fusionPoolsConfig";
+export * from "./positionLock";

@@ -8,8 +8,30 @@
 // See the LICENSE file in the project root for license information.
 //
 
+import {
+  fetchFusionPool,
+  fetchLimitOrder,
+  fetchMaybeTickArray,
+  fetchTickArray,
+  getLimitOrderAddress,
+  getTickArrayAddress,
+  LimitOrder,
+  maybeTickToFacade,
+} from "@crypticdot/fusionamm-client";
+import {
+  decreaseLimitOrderQuote,
+  getInitializableTickIndex,
+  getTickArrayStartTickIndex,
+  limitOrderQuoteByInputToken,
+  priceToTickIndex,
+  sqrtPriceToPrice,
+} from "@crypticdot/fusionamm-core";
+import { Account, Address, generateKeyPairSigner, KeyPairSigner } from "@solana/kit";
 import { findAssociatedTokenPda } from "@solana-program/token";
-import { describe, it, beforeAll, expect } from "vitest";
+import { fetchAllMint, fetchMint, fetchToken } from "@solana-program/token-2022";
+import assert from "assert";
+import { beforeAll, describe, expect, it } from "vitest";
+
 import {
   closeLimitOrderInstructions,
   harvestPositionInstructions,
@@ -18,27 +40,11 @@ import {
   PriceOrTickIndex,
   swapInstructions,
 } from "../src";
-import { rpc, signer, sendTransaction } from "./utils/mockRpc";
-import { setupMint, setupAta } from "./utils/token";
-import {
-  fetchFusionPool,
-  fetchLimitOrder,
-  fetchTickArray,
-  FusionPool, getFusionPoolsConfigAddress,
-  getLimitOrderAddress,
-  getTickArrayAddress,
-} from "@crypticdot/fusionamm-client";
-import { fetchAllMint, fetchMint, fetchToken } from "@solana-program/token-2022";
-import { Account, Address, KeyPairSigner } from "@solana/kit";
-import assert from "assert";
+
+import { rpc, sendTransaction, signer } from "./utils/mockRpc";
 import { setupFusionPool } from "./utils/program";
+import { setupAta, setupMint } from "./utils/token";
 import { setupAtaTE, setupMintTE, setupMintTEFee } from "./utils/tokenExtensions";
-import {
-  decreaseLimitOrderQuote,
-  getTickArrayStartTickIndex,
-  limitOrderQuoteByInputToken,
-  sqrtPriceToPrice,
-} from "@crypticdot/fusionamm-core";
 
 const mintTypes = new Map([
   ["A", setupMint],
@@ -61,9 +67,9 @@ const poolTypes = ["A-B", "A-TEA", "TEA-TEB", "A-TEFee"];
 describe("Limit Orders", () => {
   const tickSpacing = 64;
 
-  beforeAll(async () => {
-  });
+  beforeAll(async () => {});
 
+  /*
   const fetchAndLogTickByTickIndex = async (fusionPool: Account<FusionPool>, tickIndex: number) => {
     const tickArrayStartIndex = getTickArrayStartTickIndex(tickIndex, fusionPool.data.tickSpacing);
     const tickArrayAddress = (await getTickArrayAddress(fusionPool.address, tickArrayStartIndex))[0];
@@ -73,6 +79,7 @@ describe("Limit Orders", () => {
       tickArray.data.ticks[(tickIndex - tickArrayStartIndex) / fusionPool.data.tickSpacing],
     );
   };
+  */
 
   const testOpenLimitOrder = async (args: {
     poolAddress: Address;
@@ -80,30 +87,44 @@ describe("Limit Orders", () => {
     priceOrTickIndex: PriceOrTickIndex;
     aToB: boolean;
     signer?: KeyPairSigner;
-  }) => {
+  }): Promise<Account<LimitOrder>> => {
     const { amount, priceOrTickIndex, aToB, poolAddress } = args;
     const owner = args.signer ?? signer;
 
-    let fusionPool = await fetchFusionPool(rpc, poolAddress);
-    const [mintA, mintB] = await fetchAllMint(rpc, [fusionPool.data.tokenMintA, fusionPool.data.tokenMintB]);
+    const pool = await fetchFusionPool(rpc, poolAddress);
+    const [mintA, mintB] = await fetchAllMint(rpc, [pool.data.tokenMintA, pool.data.tokenMintB]);
 
     const ataAAddress = (
       await findAssociatedTokenPda({
-        mint: fusionPool.data.tokenMintA,
+        mint: pool.data.tokenMintA,
         owner: owner.address,
         tokenProgram: mintA.programAddress,
       })
     )[0];
     const ataBAddress = (
       await findAssociatedTokenPda({
-        mint: fusionPool.data.tokenMintB,
+        mint: pool.data.tokenMintB,
         owner: owner.address,
         tokenProgram: mintB.programAddress,
       })
     )[0];
 
-    const { limitOrderMint, instructions, amountWithFee } = await openLimitOrderInstructions(
+    const limitOrderMint = await generateKeyPairSigner();
+    const limitOrderAddress = (await getLimitOrderAddress(limitOrderMint.address))[0];
+
+    const tickIndex =
+      priceOrTickIndex.tickIndex ?? priceToTickIndex(priceOrTickIndex.price, mintA.data.decimals, mintB.data.decimals);
+    const initializableTickIndex = getInitializableTickIndex(tickIndex, pool.data.tickSpacing, false);
+    const tickArrayStartIndex = getTickArrayStartTickIndex(initializableTickIndex, pool.data.tickSpacing);
+    const tickArrayAddress = (await getTickArrayAddress(pool.address, tickArrayStartIndex))[0];
+
+    const tickArray = await fetchMaybeTickArray(rpc, tickArrayAddress);
+    const tickBefore = tickArray.exists
+      ? maybeTickToFacade(tickArray.data.ticks[(initializableTickIndex - tickArrayStartIndex) / pool.data.tickSpacing])
+      : undefined;
+    const { instructions, amountWithFee } = await openLimitOrderInstructions(
       rpc,
+      limitOrderMint,
       poolAddress,
       amount,
       priceOrTickIndex,
@@ -115,8 +136,13 @@ describe("Limit Orders", () => {
 
     await sendTransaction(instructions);
 
-    const limitOrderAddress = await getLimitOrderAddress(limitOrderMint);
-    const limitOrder = await fetchLimitOrder(rpc, limitOrderAddress[0]);
+    const limitOrder = await fetchLimitOrder(rpc, limitOrderAddress);
+
+    const tickArrayAfter = await fetchTickArray(rpc, tickArrayAddress);
+    const tickAfter = maybeTickToFacade(
+      tickArrayAfter.data.ticks[(initializableTickIndex - tickArrayStartIndex) / pool.data.tickSpacing],
+    );
+    expect(tickAfter.openOrdersInput).toEqual((tickBefore ? tickBefore.openOrdersInput : 0n) + amount);
 
     if (ataAAddress && ataBAddress) {
       const tokenAfterA = await fetchToken(rpc, ataAAddress);
@@ -136,13 +162,43 @@ describe("Limit Orders", () => {
   const testCloseLimitOrder = async (args: { limitOrderMint: Address }) => {
     const { limitOrderMint } = args;
 
-    const { instructions } = await closeLimitOrderInstructions(rpc, limitOrderMint);
+    const limitOrderAddress = (await getLimitOrderAddress(limitOrderMint))[0];
+    const limitOrder = await fetchLimitOrder(rpc, limitOrderAddress);
 
+    const poolAddress = limitOrder.data.fusionPool;
+    const pool = await fetchFusionPool(rpc, poolAddress);
+
+    const tickIndex = limitOrder.data.tickIndex;
+    const amount = limitOrder.data.amount;
+
+    const tickArrayStartIndex = getTickArrayStartTickIndex(tickIndex, pool.data.tickSpacing);
+    const tickArrayAddress = (await getTickArrayAddress(poolAddress, tickArrayStartIndex))[0];
+
+    const tickArray = await fetchTickArray(rpc, tickArrayAddress);
+    const tickNumber = (tickIndex - tickArrayStartIndex) / pool.data.tickSpacing;
+    const tickBefore = maybeTickToFacade(tickArray.data.ticks[tickNumber]);
+
+    const { instructions } = await closeLimitOrderInstructions(rpc, limitOrderMint);
     await sendTransaction(instructions);
+
+    const tickArrayAfter = await fetchTickArray(rpc, tickArrayAddress);
+    const tickAfter = maybeTickToFacade(tickArrayAfter.data.ticks[tickNumber]);
+
+    if (limitOrder.data.age == tickBefore.age) {
+      expect(tickAfter.openOrdersInput).toEqual(tickBefore.openOrdersInput - amount);
+    } else if (limitOrder.data.age + 1n == tickBefore.age) {
+      expect(tickAfter.partFilledOrdersInput).toEqual(tickBefore.partFilledOrdersInput - amount);
+    } else if (limitOrder.data.age + 2n <= tickBefore.age) {
+      if (limitOrder.data.aToB) {
+        expect(tickAfter.fulfilledAToBOrdersInput).toEqual(tickBefore.fulfilledAToBOrdersInput - amount);
+      } else {
+        expect(tickAfter.fulfilledBToAOrdersInput).toEqual(tickBefore.fulfilledBToAOrdersInput - amount);
+      }
+    }
   };
 
   const testSwapExactInput = async (args: { poolAddress: Address; mint: Address; inputAmount: bigint }) => {
-    let { instructions } = await swapInstructions(
+    const { instructions } = await swapInstructions(
       rpc,
       { inputAmount: args.inputAmount, mint: args.mint },
       args.poolAddress,
@@ -163,8 +219,8 @@ describe("Limit Orders", () => {
       const mintBAddress = await setupMintB();
       const mintA = await fetchMint(rpc, mintAAddress);
       const mintB = await fetchMint(rpc, mintBAddress);
-      const ataAAddress = await setupAtaA(mintAAddress, { amount: 100_000_000n });
-      const ataBAddress = await setupAtaB(mintBAddress, { amount: 100_000_000n });
+      const _ataAAddress = await setupAtaA(mintAAddress, { amount: 100_000_000n });
+      const _ataBAddress = await setupAtaB(mintBAddress, { amount: 100_000_000n });
       const poolAddress = await setupFusionPool(mintAAddress, mintBAddress, tickSpacing);
 
       const limitOrdersArgs = [
@@ -187,20 +243,19 @@ describe("Limit Orders", () => {
         { amount: 500_000n, priceOffset: 0.2, aToB: true },
       ];
 
-      const orders = [];
+      const orders: Account<LimitOrder>[] = [];
 
       let fusionPool = await fetchFusionPool(rpc, poolAddress);
       let currentPrice = sqrtPriceToPrice(fusionPool.data.sqrtPrice, mintA.data.decimals, mintB.data.decimals);
 
       for (const args of limitOrdersArgs) {
-        orders.push(
-          await testOpenLimitOrder({
-            ...args,
-            priceOrTickIndex: { price: currentPrice + args.priceOffset },
-            poolAddress,
-            signer,
-          }),
-        );
+        const order = await testOpenLimitOrder({
+          ...args,
+          priceOrTickIndex: { price: currentPrice + args.priceOffset },
+          poolAddress,
+          signer,
+        });
+        orders.push(order);
       }
 
       // The 1st order will be fulfilled, the 2nd - partially filled, the 3rd - not filled.
@@ -215,25 +270,24 @@ describe("Limit Orders", () => {
       currentPrice = sqrtPriceToPrice(fusionPool.data.sqrtPrice, mintA.data.decimals, mintB.data.decimals);
       //console.log("PRICE =", currentPrice);
 
-      /*
-      fusionPool = await fetchFusionPool(rpc, poolAddress);
-      poolVaultA = await fetchToken(rpc, fusionPool.data.tokenVaultA);
-      poolVaultB = await fetchToken(rpc, fusionPool.data.tokenVaultB);
-      console.log(`Pool balance after B->A swap: [${poolVaultA.data.amount}, ${poolVaultB.data.amount}]`);
-      console.log("Pool tick after B->A swap", fusionPool.data.tickCurrentIndex);
+      //fusionPool = await fetchFusionPool(rpc, poolAddress);
+      //poolVaultA = await fetchToken(rpc, fusionPool.data.tokenVaultA);
+      //poolVaultB = await fetchToken(rpc, fusionPool.data.tokenVaultB);
+      //console.log(`Pool balance after B->A swap: [${poolVaultA.data.amount}, ${poolVaultB.data.amount}]`);
+      //console.log("Pool tick after B->A swap", fusionPool.data.tickCurrentIndex);
 
-      for (let i = 0; i < limitOrders.length; i++) {
-        const tickArrayStartIndex = getTickArrayStartTickIndex(
-          limitOrders[i].data.tickIndex,
-          fusionPool.data.tickSpacing,
-        );
-        const tickArrayAddress = (await getTickArrayAddress(fusionPool.address, tickArrayStartIndex))[0];
-        const tickArray = await fetchTickArray(rpc, tickArrayAddress);
-        console.log(
-          `TICK ${limitOrders[i].data.tickIndex}: `,
-          tickArray.data.ticks[(limitOrders[i].data.tickIndex - tickArrayStartIndex) / fusionPool.data.tickSpacing],
-        );
-      }*/
+      //for (let i = 0; i < limitOrders.length; i++) {
+      //  const tickArrayStartIndex = getTickArrayStartTickIndex(
+      //    limitOrders[i].data.tickIndex,
+      //    fusionPool.data.tickSpacing,
+      //  );
+      //  const tickArrayAddress = (await getTickArrayAddress(fusionPool.address, tickArrayStartIndex))[0];
+      //  const tickArray = await fetchTickArray(rpc, tickArrayAddress);
+      //  console.log(
+      //    `TICK ${limitOrders[i].data.tickIndex}: `,
+      //   tickArray.data.ticks[(limitOrders[i].data.tickIndex - tickArrayStartIndex) / fusionPool.data.tickSpacing],
+      //  );
+      //}
 
       for (const args of limitOrdersArgs) {
         orders.push(
@@ -296,8 +350,8 @@ describe("Limit Orders", () => {
 
     const mintAAddress = await setupMintA();
     const mintBAddress = await setupMintB();
-    const mintA = await fetchMint(rpc, mintAAddress);
-    const mintB = await fetchMint(rpc, mintBAddress);
+    const _mintA = await fetchMint(rpc, mintAAddress);
+    const _mintB = await fetchMint(rpc, mintBAddress);
     const ataAAddress = await setupAtaA(mintAAddress, { amount: 100_000_000n });
     const ataBAddress = await setupAtaB(mintBAddress, { amount: 100_000_000n });
     const poolAddress = await setupFusionPool(mintAAddress, mintBAddress, tickSpacing);
@@ -316,6 +370,7 @@ describe("Limit Orders", () => {
 
     const innerPositionIx = await openPositionInstructions(
       rpc,
+      await generateKeyPairSigner(),
       poolAddress,
       { tokenA: 1_000_000n },
       { tickIndex: -128 },
@@ -337,6 +392,7 @@ describe("Limit Orders", () => {
     // Open the outer position
     const outerPositionIx = await openPositionInstructions(
       rpc,
+      await generateKeyPairSigner(),
       poolAddress,
       { tokenA: 1_000_000n },
       { tickIndex: -256 },
@@ -395,9 +451,9 @@ describe("Limit Orders", () => {
       { amount: 1_000_000n, priceOffset: -0.1, aToB: false }, // 2nd
     ];
 
-    const orders = [];
+    const orders: Account<LimitOrder>[] = [];
     let fusionPool = await fetchFusionPool(rpc, poolAddress);
-    let currentPrice = sqrtPriceToPrice(fusionPool.data.sqrtPrice, mintA.data.decimals, mintB.data.decimals);
+    const currentPrice = sqrtPriceToPrice(fusionPool.data.sqrtPrice, mintA.data.decimals, mintB.data.decimals);
 
     for (const args of limitOrdersArgs) {
       orders.push(
@@ -413,7 +469,12 @@ describe("Limit Orders", () => {
     const limitOrder = orders[0].data;
 
     // Quote the limit order output
-    const quotedAmountOut = limitOrderQuoteByInputToken(orders[0].data.amount, orders[0].data.aToB, orders[0].data.tickIndex, fusionPool.data);
+    const quotedAmountOut = limitOrderQuoteByInputToken(
+      orders[0].data.amount,
+      orders[0].data.aToB,
+      orders[0].data.tickIndex,
+      fusionPool.data,
+    );
     // The actual limit order output will be 1066409.
     // It happens because the quote function has different math. A small error is fine.
     expect(quotedAmountOut).toEqual(1066405n);
@@ -427,7 +488,16 @@ describe("Limit Orders", () => {
     const tickArray = await fetchTickArray(rpc, tickArrayAddress[0]);
 
     // Decrease Limit Order Quote
-    const tick = tickArray.data.ticks[(limitOrder.tickIndex - startTickIndex) / fusionPool.data.tickSpacing];
+    const tick = maybeTickToFacade(
+      tickArray.data.ticks[(limitOrder.tickIndex - startTickIndex) / fusionPool.data.tickSpacing],
+    );
+    expect(tick.age).toEqual(2n);
+    expect(tick.openOrdersInput).toEqual(0n);
+    expect(tick.partFilledOrdersInput).toEqual(0n);
+    expect(tick.partFilledOrdersRemainingInput).toEqual(0n);
+    expect(tick.fulfilledAToBOrdersInput).toEqual(0n);
+    expect(tick.fulfilledBToAOrdersInput).toEqual(1000000n);
+
     const decreaseQuote = decreaseLimitOrderQuote(fusionPool.data, limitOrder, tick, limitOrder.amount);
     expect(decreaseQuote.amountOutA).toEqual(1066409n);
     expect(decreaseQuote.amountOutB).toEqual(0n);

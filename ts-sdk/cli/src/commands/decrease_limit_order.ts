@@ -1,11 +1,12 @@
 import { fetchFusionPool, fetchMaybeLimitOrder, getLimitOrderAddress } from "@crypticdot/fusionamm-client";
 import { closeLimitOrderInstructions, decreaseLimitOrderInstructions } from "@crypticdot/fusionamm-sdk";
-import BaseCommand, { addressArg, bigintArg } from "../base";
-import { rpc, signer } from "../rpc";
+import { sendTransaction } from "@crypticdot/fusionamm-tx-sender";
 import { IInstruction } from "@solana/kit";
 import { fetchAllMaybeToken, findAssociatedTokenPda } from "@solana-program/token-2022";
 import { fetchAllMint } from "@solana-program/token-2022";
-import { sendTransaction } from "@crypticdot/fusionamm-tx-sender";
+
+import BaseCommand, { addressArg, bigintArg } from "../base";
+import { rpc, signer } from "../rpc";
 
 export default class DecreaseLimitOrder extends BaseCommand {
   static override args = {

@@ -20,3 +20,5 @@ export * from "./position";
 export * from "./swap";
 export * from "./collectProtocolFees";
 export * from "./resetPoolPrice";
+export * from "./lockPosition";
+export * from "./sysvar";

@@ -8,14 +8,16 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import { fetchToken } from "@solana-program/token";
 import type { Address } from "@solana/kit";
+import { fetchToken } from "@solana-program/token";
 import assert from "assert";
 import { beforeAll, describe, it } from "vitest";
+
 import { harvestPositionInstructions } from "../src/harvest";
 import { swapInstructions } from "../src/swap";
+
 import { rpc, sendTransaction } from "./utils/mockRpc";
-import { setupPosition, setupFusionPool } from "./utils/program";
+import { setupFusionPool, setupPosition } from "./utils/program";
 import { setupAta, setupMint } from "./utils/token";
 import { setupAtaTE, setupMintTE, setupMintTEFee } from "./utils/tokenExtensions";
 

@@ -9,6 +9,7 @@
 //
 
 import type { GetAccountInfoApi, Rpc } from "@solana/kit";
+
 import { fetchFusionPoolsConfig } from "../generated";
 import { getFusionPoolsConfigAddress } from "../pda";
 

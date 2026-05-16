@@ -8,7 +8,7 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import type {Position, PositionBundle} from "@crypticdot/fusionamm-client";
+import type { Position, PositionBundle } from "@crypticdot/fusionamm-client";
 import {
   fetchAllMaybePosition,
   fetchAllMaybePositionBundle,
@@ -19,9 +19,7 @@ import {
   getPositionBundleAddress,
   positionFusionPoolFilter,
 } from "@crypticdot/fusionamm-client";
-import {_POSITION_BUNDLE_SIZE} from "@crypticdot/fusionamm-core";
-import {getTokenDecoder, TOKEN_PROGRAM_ADDRESS} from "@solana-program/token";
-import {TOKEN_2022_PROGRAM_ADDRESS} from "@solana-program/token-2022";
+import { _POSITION_BUNDLE_SIZE } from "@crypticdot/fusionamm-core";
 import type {
   Account,
   Address,
@@ -30,7 +28,9 @@ import type {
   GetTokenAccountsByOwnerApi,
   Rpc,
 } from "@solana/kit";
-import {getBase64Encoder} from "@solana/kit";
+import { getBase64Encoder } from "@solana/kit";
+import { getTokenDecoder, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
 
 /**
  * Represents a Position account.
@@ -98,8 +98,8 @@ export async function fetchPositionsForOwner(
   owner: Address,
 ): Promise<PositionData[]> {
   const [tokenAccounts, token2022Accounts] = await Promise.all([
-    rpc.getTokenAccountsByOwner(owner, {programId: TOKEN_PROGRAM_ADDRESS}, {encoding: "base64"}).send(),
-    rpc.getTokenAccountsByOwner(owner, {programId: TOKEN_2022_PROGRAM_ADDRESS}, {encoding: "base64"}).send(),
+    rpc.getTokenAccountsByOwner(owner, { programId: TOKEN_PROGRAM_ADDRESS }, { encoding: "base64" }).send(),
+    rpc.getTokenAccountsByOwner(owner, { programId: TOKEN_2022_PROGRAM_ADDRESS }, { encoding: "base64" }).send(),
   ]);
 
   const encoder = getBase64Encoder();

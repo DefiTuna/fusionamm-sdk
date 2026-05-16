@@ -1,7 +1,7 @@
 {
   "name": "@crypticdot/fusionamm-integration",
   "private": true,
-  "version": "1.0.59",
+  "version": "1.1.5",
   "type": "module",
   "scripts": {
     "test": "vitest run index.test.ts --test-timeout 60000"
@@ -12,6 +12,9 @@
     "@crypticdot/fusionamm-sdk": "workspace:*"
   },
   "devDependencies": {
+    "@crypticdot/typescript-config": "^1.0.0",
+    "@crypticdot/eslint-config": "^1.0.0",
+    "@crypticdot/prettier-config": "^1.0.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3"
   }

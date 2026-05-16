@@ -10,6 +10,7 @@
 
 import type { Address, ProgramDerivedAddress } from "@solana/kit";
 import { getAddressEncoder, getProgramDerivedAddress, getU16Encoder } from "@solana/kit";
+
 import { FUSIONAMM_PROGRAM_ADDRESS } from "../generated";
 
 export async function getFusionPoolAddress(

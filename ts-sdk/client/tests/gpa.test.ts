@@ -17,14 +17,15 @@ import {
   getAddressDecoder,
   getBase58Encoder,
 } from "@solana/kit";
-import type {
+import {
   PositionArgs,
   PositionBundleArgs,
   FusionPoolArgs,
   TokenBadgeArgs,
-  TickArrayArgs,
-  TickArgs,
   LimitOrderArgs,
+  MaybeTickArgs,
+  TickArrayArgs,
+  getTickArrayEncoder,
 } from "../src";
 import {
   getPositionEncoder,
@@ -36,10 +37,6 @@ import {
   getPositionBundleEncoder,
   fetchAllPositionBundleWithFilter,
   positionBundleMintFilter,
-  getTickArrayEncoder,
-  fetchAllTickArrayWithFilter,
-  tickArrayStartTickIndexFilter,
-  tickArrayFusionPoolFilter,
   getTokenBadgeEncoder,
   fetchAllTokenBadgeWithFilter,
   tokenBadgeTokenMintFilter,
@@ -56,6 +53,9 @@ import {
   getLimitOrderEncoder,
   limitOrderFusionPoolFilter,
   limitOrderMintFilter,
+  fetchAllTickArrayWithFilter,
+  tickArrayFusionPoolFilter,
+  tickArrayStartTickIndexFilter,
 } from "../src";
 import { fetchDecodedProgramAccounts } from "../src/gpa/utils";
 
@@ -143,18 +143,22 @@ describe("get program account memcmp filters", () => {
   });
 
   it("TickArray", async () => {
-    const tickStruct: TickArgs = {
-      initialized: true,
-      liquidityNet: 1234,
-      liquidityGross: 5678,
-      feeGrowthOutsideA: 9012,
-      feeGrowthOutsideB: 3456,
-      age: 777,
-      openOrdersInput: 3242,
-      partFilledOrdersInput: 6432354,
-      partFilledOrdersRemainingInput: 783434,
-      fulfilledAToBOrdersInput: 23463,
-      fulfilledBToAOrdersInput: 14633,
+    const tickStruct: MaybeTickArgs = {
+      __kind: "Initialized",
+      fields: [
+        {
+          liquidityNet: 1,
+          liquidityGross: 2,
+          feeGrowthOutsideA: 3,
+          feeGrowthOutsideB: 4,
+          age: 5,
+          openOrdersInput: 6,
+          partFilledOrdersInput: 7,
+          partFilledOrdersRemainingInput: 8,
+          fulfilledAToBOrdersInput: 9,
+          fulfilledBToAOrdersInput: 10,
+        },
+      ],
     };
     const tickArrayStruct: TickArrayArgs = {
       startTickIndex: 1234,
@@ -169,6 +173,7 @@ describe("get program account memcmp filters", () => {
     const data = getTickArrayEncoder().encode(tickArrayStruct);
     assertFilters(data);
   });
+
 
   it("TokenBadge", async () => {
     const tokenBadgeStruct: TokenBadgeArgs = {

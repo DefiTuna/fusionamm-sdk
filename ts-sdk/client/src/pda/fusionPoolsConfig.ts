@@ -10,6 +10,7 @@
 
 import type { ProgramDerivedAddress } from "@solana/kit";
 import { getProgramDerivedAddress } from "@solana/kit";
+
 import { FUSIONAMM_PROGRAM_ADDRESS } from "../generated";
 
 export async function getFusionPoolsConfigAddress(): Promise<ProgramDerivedAddress> {

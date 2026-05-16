@@ -1,6 +1,6 @@
 {
   "name": "@crypticdot/fusionamm-program",
-  "version": "1.0.0",
+  "version": "1.1.4",
   "private": true,
   "devDependencies": {},
   "packageManager": "pnpm@9.1.2"

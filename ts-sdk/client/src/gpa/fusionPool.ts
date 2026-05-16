@@ -8,11 +8,13 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import type {Account, Address, GetProgramAccountsApi, GetProgramAccountsMemcmpFilter, Rpc} from "@solana/kit";
-import {getAddressEncoder, getBase58Decoder, getU16Encoder} from "@solana/kit";
-import type {FusionPool} from "../generated";
-import {FUSION_POOL_DISCRIMINATOR, getFusionPoolDecoder, FUSIONAMM_PROGRAM_ADDRESS} from "../generated";
-import {fetchDecodedProgramAccounts} from "./utils";
+import type { Account, Address, GetProgramAccountsApi, GetProgramAccountsMemcmpFilter, Rpc } from "@solana/kit";
+import { getAddressEncoder, getBase58Decoder, getU16Encoder } from "@solana/kit";
+
+import type { FusionPool } from "../generated";
+import { FUSION_POOL_DISCRIMINATOR, FUSIONAMM_PROGRAM_ADDRESS, getFusionPoolDecoder } from "../generated";
+
+import { fetchDecodedProgramAccounts } from "./utils";
 
 export type FusionPoolFilter = GetProgramAccountsMemcmpFilter & {
   readonly __kind: unique symbol;

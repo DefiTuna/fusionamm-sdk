@@ -9,37 +9,31 @@
 //
 
 import {
-  getInitializePoolInstruction,
-  getInitializeTickArrayInstruction,
-  getTickArrayAddress,
-  getTickArraySize,
-  getTokenBadgeAddress,
   getFusionPoolAddress,
-  getFusionPoolSize,
   getFusionPoolsConfigAddress,
+  getFusionPoolSize,
+  getInitializePoolInstruction,
+  getTokenBadgeAddress,
 } from "@crypticdot/fusionamm-client";
-import type {
+import { priceToSqrtPrice } from "@crypticdot/fusionamm-core";
+import {
   Address,
   GetAccountInfoApi,
   GetMultipleAccountsApi,
   IInstruction,
+  KeyPairSigner,
   Lamports,
   Rpc,
   TransactionSigner,
 } from "@solana/kit";
-import {generateKeyPairSigner, lamports} from "@solana/kit";
-import {fetchSysvarRent} from "@solana/sysvars";
-import {DEFAULT_ADDRESS, FUNDER} from "./config";
-import {
-  getFullRangeTickIndexes,
-  getTickArrayStartTickIndex,
-  priceToSqrtPrice,
-  sqrtPriceToTickIndex,
-} from "@crypticdot/fusionamm-core";
-import {fetchAllMint} from "@solana-program/token-2022";
+import { generateKeyPairSigner, lamports } from "@solana/kit";
+import { fetchSysvarRent } from "@solana/sysvars";
+import { fetchAllMint } from "@solana-program/token-2022";
 import assert from "assert";
-import {getTokenSizeForMint, orderMints} from "./token";
-import {calculateMinimumBalanceForRentExemption} from "./sysvar";
+
+import { DEFAULT_ADDRESS, FUNDER } from "./config";
+import { calculateMinimumBalanceForRentExemption } from "./sysvar";
+import { getTokenSizeForMint, orderMints } from "./token";
 
 /**
  * Represents the instructions and metadata for creating a pool.
@@ -53,6 +47,12 @@ export type CreatePoolInstructions = {
 
   /** The address of the newly created pool. */
   poolAddress: Address;
+
+  /** Token vault A address. */
+  tokenVaultA: Address;
+
+  /** Token vault B address. */
+  tokenVaultB: Address;
 };
 
 /**
@@ -65,6 +65,8 @@ export type CreatePoolInstructions = {
  * @param {number} feeRate - The fee rate for the pool.
  * @param {number} [initialPrice=1] - The initial price of token 1 in terms of token 2.
  * @param {TransactionSigner} [funder=FUNDER] - The account that will fund the initialization process.
+ * @param {number} tokenVaultA - Optional keypair of the token vault A for the pool.
+ * @param {number} tokenVaultB - Optional keypair of the token vault B for the pool.
  *
  * @returns {Promise<CreatePoolInstructions>} A promise that resolves to an object containing the pool creation instructions, the estimated initialization cost, and the pool address.
  *
@@ -82,7 +84,7 @@ export type CreatePoolInstructions = {
  * const feeRate = 300;
  * const initialPrice = 0.01;
  *
- * const { poolAddress, instructions, initializationCost } = await createFusionPoolInstructions(
+ * const { poolAddress, tokenVaultA, tokenVaultB, instructions, initializationCost } = await createFusionPoolInstructions(
  *     devnetRpc,
  *     tokenMintOne,
  *     tokenMintTwo,
@@ -103,6 +105,8 @@ export async function createFusionPoolInstructions(
   feeRate: number,
   initialPrice: number = 1,
   funder: TransactionSigner = FUNDER,
+  tokenVaultA?: KeyPairSigner,
+  tokenVaultB?: KeyPairSigner,
 ): Promise<CreatePoolInstructions> {
   assert(funder.address !== DEFAULT_ADDRESS, "Either supply a funder or set the default funder");
   assert(
@@ -123,14 +127,15 @@ export async function createFusionPoolInstructions(
 
   const initialSqrtPrice = priceToSqrtPrice(initialPrice, decimalsA, decimalsB);
 
-  const [fusionPoolsConfig, poolAddress, tokenBadgeA, tokenBadgeB, tokenVaultA, tokenVaultB] = await Promise.all([
+  const [fusionPoolsConfig, poolAddress, tokenBadgeA, tokenBadgeB] = await Promise.all([
     getFusionPoolsConfigAddress().then(x => x[0]),
     getFusionPoolAddress(tokenMintA, tokenMintB, tickSpacing).then(x => x[0]),
     getTokenBadgeAddress(tokenMintA).then(x => x[0]),
     getTokenBadgeAddress(tokenMintB).then(x => x[0]),
-    generateKeyPairSigner(),
-    generateKeyPairSigner(),
   ]);
+
+  if (!tokenVaultA) tokenVaultA = await generateKeyPairSigner();
+  if (!tokenVaultB) tokenVaultB = await generateKeyPairSigner();
 
   instructions.push(
     getInitializePoolInstruction({
@@ -154,7 +159,7 @@ export async function createFusionPoolInstructions(
   nonRefundableRent += calculateMinimumBalanceForRentExemption(rent, getTokenSizeForMint(mintA));
   nonRefundableRent += calculateMinimumBalanceForRentExemption(rent, getTokenSizeForMint(mintB));
   nonRefundableRent += calculateMinimumBalanceForRentExemption(rent, getFusionPoolSize());
-
+  /*
   const fullRange = getFullRangeTickIndexes(tickSpacing);
   const lowerTickIndex = getTickArrayStartTickIndex(fullRange.tickLowerIndex, tickSpacing);
   const upperTickIndex = getTickArrayStartTickIndex(fullRange.tickUpperIndex, tickSpacing);
@@ -178,10 +183,12 @@ export async function createFusionPoolInstructions(
     );
     nonRefundableRent += calculateMinimumBalanceForRentExemption(rent, getTickArraySize());
   }
-
+*/
   return {
     instructions,
     poolAddress,
+    tokenVaultA: tokenVaultA.address,
+    tokenVaultB: tokenVaultB.address,
     initializationCost: lamports(nonRefundableRent),
   };
 }

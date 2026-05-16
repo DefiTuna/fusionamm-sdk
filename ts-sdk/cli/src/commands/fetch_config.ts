@@ -1,4 +1,5 @@
 import { fetchMaybeFusionPoolsConfig, getFusionPoolsConfigAddress } from "@crypticdot/fusionamm-client";
+
 import BaseCommand from "../base";
 import { rpc } from "../rpc";
 

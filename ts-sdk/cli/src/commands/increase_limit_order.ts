@@ -2,11 +2,12 @@ import { fetchMaybeFusionPool } from "@crypticdot/fusionamm-client";
 import { sqrtPriceToPrice } from "@crypticdot/fusionamm-core";
 import { increaseLimitOrderInstructions, openLimitOrderInstructions } from "@crypticdot/fusionamm-sdk";
 import { sendTransaction } from "@crypticdot/fusionamm-tx-sender";
+import { Flags } from "@oclif/core";
+import { generateKeyPairSigner, IInstruction } from "@solana/kit";
+import { fetchMint } from "@solana-program/token-2022";
+
 import BaseCommand, { addressArg, addressFlag, bigintFlag, priceFlag } from "../base";
 import { rpc, signer } from "../rpc";
-import { fetchMint } from "@solana-program/token-2022";
-import { IInstruction } from "@solana/kit";
-import { Flags } from "@oclif/core";
 
 export default class IncreaseLimitOrder extends BaseCommand {
   static override args = {
@@ -79,8 +80,12 @@ export default class IncreaseLimitOrder extends BaseCommand {
         throw new Error("Swap direction flag must be set");
       }
 
+      const limitOrderMintKeyPair = await generateKeyPairSigner();
+      limitOrderMint = limitOrderMintKeyPair.address;
+
       const openInstructions = await openLimitOrderInstructions(
         rpc,
+        limitOrderMintKeyPair,
         fusionPool.address,
         flags.amount!,
         { price: flags.price },
@@ -89,7 +94,6 @@ export default class IncreaseLimitOrder extends BaseCommand {
       );
       instructions.push(...openInstructions.instructions);
 
-      limitOrderMint = openInstructions.limitOrderMint;
       console.log("Opening a new limit order with mint address:", limitOrderMint);
       console.log("Limit order price:", flags.price);
       console.log("Limit order amount:", flags.amount);

@@ -5,9 +5,10 @@ import {
   DecreaseLiquidityQuoteParam,
 } from "@crypticdot/fusionamm-sdk";
 import { sendTransaction } from "@crypticdot/fusionamm-tx-sender";
+import { IInstruction } from "@solana/kit";
+
 import BaseCommand, { addressArg, bigintFlag } from "../base";
 import { rpc, signer } from "../rpc";
-import { IInstruction } from "@solana/kit";
 
 export default class DecreaseLiquidity extends BaseCommand {
   static override args = {

@@ -391,7 +391,7 @@ async fn internal_open_position(
                 start_tick_index: lower_tick_start_index,
             }),
         );
-        non_refundable_rent += rent.minimum_balance(TickArray::LEN);
+        non_refundable_rent += rent.minimum_balance(TickArray::MIN_LEN);
     }
 
     if tick_array_infos[1].is_none() && lower_tick_start_index != upper_tick_start_index {
@@ -406,7 +406,7 @@ async fn internal_open_position(
                 start_tick_index: upper_tick_start_index,
             }),
         );
-        non_refundable_rent += rent.minimum_balance(TickArray::LEN);
+        non_refundable_rent += rent.minimum_balance(TickArray::MIN_LEN);
     }
 
     let token_owner_account_a = token_accounts

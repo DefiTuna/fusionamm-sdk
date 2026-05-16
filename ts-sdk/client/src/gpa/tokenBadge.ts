@@ -8,12 +8,14 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import type { GetProgramAccountsMemcmpFilter, Address, Account, GetProgramAccountsApi, Rpc } from "@solana/kit";
-import { getBase58Decoder, getAddressEncoder } from "@solana/kit";
+import type { Account, Address, GetProgramAccountsApi, GetProgramAccountsMemcmpFilter, Rpc } from "@solana/kit";
+import { getAddressEncoder, getBase58Decoder } from "@solana/kit";
+
 import type { TokenBadge } from "../generated/accounts/tokenBadge";
-import { TOKEN_BADGE_DISCRIMINATOR, getTokenBadgeDecoder } from "../generated/accounts/tokenBadge";
-import { fetchDecodedProgramAccounts } from "./utils";
+import { getTokenBadgeDecoder, TOKEN_BADGE_DISCRIMINATOR } from "../generated/accounts/tokenBadge";
 import { FUSIONAMM_PROGRAM_ADDRESS } from "../generated/programs/fusionamm";
+
+import { fetchDecodedProgramAccounts } from "./utils";
 
 export type TokenBadgeFilter = GetProgramAccountsMemcmpFilter & {
   readonly __kind: unique symbol;

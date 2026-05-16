@@ -2,7 +2,7 @@
   "address": "fUSioN9YKKSa3CUC2YUc4tPkHJ5Y6XW1yz8y6F7qWz9",
   "metadata": {
     "name": "fusionamm",
-    "version": "1.0.15",
+    "version": "1.1.4",
     "spec": "0.1.0"
   },
   "instructions": [
@@ -589,6 +589,28 @@
       "args": []
     },
     {
+      "name": "idl_include",
+      "discriminator": [
+        223,
+        253,
+        121,
+        121,
+        60,
+        193,
+        129,
+        31
+      ],
+      "accounts": [
+        {
+          "name": "tick_array"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "increase_limit_order",
       "docs": [
         "Add tokens to a limit order in the FusionPool.",
@@ -1118,6 +1140,73 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "lock_position",
+      "docs": [
+        "Lock the position to prevent liquidity decrease.",
+        "",
+        "### Authority",
+        "- `position_authority` - The authority that owns the position token.",
+        "",
+        "#### Special Errors",
+        "- `PositionAlreadyLocked` - The provided position is already locked.",
+        "- `PositionNotLockable` - The provided position is not lockable (e.g. An empty position)."
+      ],
+      "discriminator": [
+        227,
+        62,
+        2,
+        252,
+        247,
+        10,
+        171,
+        185
+      ],
+      "accounts": [
+        {
+          "name": "funder",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "position_authority",
+          "signer": true
+        },
+        {
+          "name": "position"
+        },
+        {
+          "name": "position_mint"
+        },
+        {
+          "name": "position_token_account",
+          "writable": true
+        },
+        {
+          "name": "position_lock",
+          "writable": true
+        },
+        {
+          "name": "fusion_pool"
+        },
+        {
+          "name": "token_2022_program"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "lock_type",
+          "type": {
+            "defined": {
+              "name": "PositionLockType"
+            }
+          }
+        }
+      ]
     },
     {
       "name": "open_bundled_position",
@@ -2072,16 +2161,29 @@
       ]
     },
     {
+      "name": "PositionLock",
+      "discriminator": [
+        163,
+        137,
+        166,
+        27,
+        112,
+        14,
+        172,
+        118
+      ]
+    },
+    {
       "name": "TickArray",
       "discriminator": [
-        69,
+        85,
+        1,
+        199,
+        2,
+        188,
         97,
-        189,
-        190,
-        110,
-        7,
-        66,
-        187
+        101,
+        139
       ]
     },
     {
@@ -2417,7 +2519,22 @@
     {
       "code": 6063,
       "name": "ResetPriceForNonEmptyPool",
-      "msg": "Can't reset the price because a pool is not empty"
+      "msg": "Can't reset the price because the pool is not empty"
+    },
+    {
+      "code": 6064,
+      "name": "PositionLocked",
+      "msg": "Position locked"
+    },
+    {
+      "code": 6065,
+      "name": "PositionNotLockable",
+      "msg": "Position is not lockable"
+    },
+    {
+      "code": 6066,
+      "name": "RentCalculationError",
+      "msg": "Rent calculation error"
     }
   ],
   "types": [
@@ -2675,6 +2792,27 @@
       }
     },
     {
+      "name": "MaybeTick",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Uninitialized"
+          },
+          {
+            "name": "Initialized",
+            "fields": [
+              {
+                "defined": {
+                  "name": "TickData"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "name": "Position",
       "type": {
         "kind": "struct",
@@ -2753,6 +2891,61 @@
       }
     },
     {
+      "name": "PositionLock",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "position_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "position_owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "fusion_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "locked_timestamp",
+            "type": "u64"
+          },
+          {
+            "name": "lock_type",
+            "type": {
+              "defined": {
+                "name": "PositionLockType"
+              }
+            }
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u8",
+                128
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionLockType",
+      "repr": {
+        "kind": "rust"
+      },
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Permanent"
+          }
+        ]
+      }
+    },
+    {
       "name": "RemainingAccountsInfo",
       "type": {
         "kind": "struct",
@@ -2791,19 +2984,39 @@
       }
     },
     {
-      "name": "Tick",
-      "serialization": "bytemuckunsafe",
-      "repr": {
-        "kind": "c",
-        "packed": true
-      },
+      "name": "TickArray",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "initialized",
-            "type": "bool"
+            "name": "start_tick_index",
+            "type": "i32"
           },
+          {
+            "name": "fusion_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "ticks",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "MaybeTick"
+                  }
+                },
+                88
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TickData",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
             "name": "liquidity_net",
             "type": "i128"
@@ -2843,40 +3056,6 @@
           {
             "name": "fulfilled_b_to_a_orders_input",
             "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "TickArray",
-      "serialization": "bytemuckunsafe",
-      "repr": {
-        "kind": "c",
-        "packed": true
-      },
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "start_tick_index",
-            "type": "i32"
-          },
-          {
-            "name": "ticks",
-            "type": {
-              "array": [
-                {
-                  "defined": {
-                    "name": "Tick"
-                  }
-                },
-                88
-              ]
-            }
-          },
-          {
-            "name": "fusion_pool",
-            "type": "pubkey"
           }
         ]
       }

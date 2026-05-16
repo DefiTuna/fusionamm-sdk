@@ -17,7 +17,7 @@ use solana_client::rpc_config::{RpcSendTransactionConfig, RpcSimulateTransaction
 use solana_client::rpc_response::{Response, RpcSimulateTransactionResult};
 use solana_commitment_config::{CommitmentConfig, CommitmentLevel};
 use solana_compute_budget_interface::ComputeBudgetInstruction;
-use solana_instruction::Instruction;
+use solana_instruction::{AccountMeta, Instruction};
 use solana_keypair::Keypair;
 use solana_message::{v0, VersionedMessage};
 use solana_program::address_lookup_table::AddressLookupTableAccount;
@@ -53,9 +53,11 @@ pub struct SmartTxConfig {
     /// The simulation is skipped if set to true. Default value is false.
     pub disable_simulation: bool,
     /// Ignores simulation errors and sends the transaction anyway if set to true.
-    pub ingore_simulation_error: bool,
+    pub ignore_simulation_error: bool,
     /// Specifies whether signature verification is required during the simulation.
     pub sig_verify_on_simulation: bool,
+    /// Only run the simulation, don't send a transaction.
+    pub dry_run: bool,
     /// Wait for the transaction confirmation.
     pub wait_for_confirmation: bool,
     /// Transaction confirmation polling interval. The default value is 2 seconds.
@@ -64,6 +66,8 @@ pub struct SmartTxConfig {
     pub transaction_timeout: Option<Duration>,
     /// The blockhash to use for the transaction. If set to None, the recent one will be fetched.
     pub blockhash: Option<Hash>,
+    /// Allow randomness of a transaction data by adding a very small random amount to the CU limit.
+    pub allow_randomness: bool,
 }
 
 impl Default for SmartTxConfig {
@@ -74,12 +78,14 @@ impl Default for SmartTxConfig {
             default_compute_unit_limit: MAX_COMPUTE_UNIT_LIMIT,
             compute_unit_margin_multiplier: DEFAULT_COMPUTE_UNIT_MARGIN_MULTIPLIER,
             disable_simulation: false,
-            ingore_simulation_error: false,
+            ignore_simulation_error: false,
             sig_verify_on_simulation: true,
+            dry_run: false,
             wait_for_confirmation: true,
             polling_interval: None,
             transaction_timeout: None,
             blockhash: None,
+            allow_randomness: false,
         }
     }
 }
@@ -123,7 +129,7 @@ impl Display for SmartTxElapsedTime {
 #[derive(Clone)]
 pub struct SmartTxResult {
     /// The transaction signature.
-    pub signature: Option<Signature>,
+    pub signature: Signature,
     /// Used priority fee (micro lamports per compute unit).
     pub priority_fee: u64,
     /// Jito bundle id if the transaction has been sent via Jito.
@@ -173,11 +179,9 @@ pub async fn send_smart_transaction(
             priority_fee = if let PriorityFeeLevel::Custom(fee) = fee_config.fee_level {
                 fee
             } else {
-                let mut accounts: Vec<Pubkey> = instructions.iter().flat_map(|ix| ix.accounts.iter()).map(|a| a.pubkey).collect();
-                let programs: Vec<Pubkey> = instructions.iter().map(|ix| ix.program_id).collect();
-                accounts.extend(programs);
-
-                get_priority_fee_estimate(client, accounts, fee_config.fee_level).await?
+                let accounts: Vec<AccountMeta> = instructions.iter().flat_map(|ix| ix.accounts.iter().cloned()).collect();
+                let addresses: Vec<Pubkey> = accounts.iter().filter(|a| a.is_writable).map(|a| a.pubkey).collect();
+                get_priority_fee_estimate(client, addresses, fee_config.fee_level).await?
             };
 
             if let Some(fee_min) = fee_config.fee_min {
@@ -199,7 +203,8 @@ pub async fn send_smart_transaction(
 
     // Add a tip instruction to the end of the instructions list if jito tips are provided.
     if let Some(jito_config) = tx_config.jito.clone() {
-        let rnd = rand::rng().random_range(0..JITO_TIP_ACCOUNTS.len());
+        let mut rng = rand::rng();
+        let rnd = rng.random_range(0..JITO_TIP_ACCOUNTS.len());
         let tip_amount = jito_config.tips.max(MIN_JITO_TIP_LAMPORTS);
         let random_tip_account = Pubkey::from_str(JITO_TIP_ACCOUNTS[rnd]).unwrap();
         let tip_instruction = transfer(payer, &random_tip_account, tip_amount);
@@ -228,17 +233,23 @@ pub async fn send_smart_transaction(
                         match err.clone() {
                             TransactionError::BlockhashNotFound => continue,
                             err => {
-                                if !tx_config.ingore_simulation_error {
+                                if !tx_config.ignore_simulation_error {
                                     return Err(err.into());
                                 } else {
-                                    warn!(target: "log", "Simulation failed with error: {:?}", err);
+                                    warn!("Simulation failed with error: {:?}", err);
                                     break;
                                 }
                             }
                         }
                     }
 
-                    let cu_consumed = response.value.units_consumed.unwrap_or(0);
+                    let mut cu_consumed = response.value.units_consumed.unwrap_or(0);
+
+                    // Add some randomness to avoid tx_id collision.
+                    if tx_config.allow_randomness {
+                        let rnd = rand::rng().random_range(0..=128);
+                        cu_consumed += rnd;
+                    }
 
                     // Add margin to the consumed compute units during the simulation.
                     cu_limit =
@@ -246,7 +257,7 @@ pub async fn send_smart_transaction(
                     break;
                 }
                 Err(_) => {
-                    //warn!(target: "log", "Simulation failed with error: {:?}", err);
+                    //warn!("Simulation failed with error: {:?}", err);
                     continue;
                 }
             };
@@ -255,9 +266,9 @@ pub async fn send_smart_transaction(
         if cu_limit == 0 {
             cu_limit = tx_config.default_compute_unit_limit;
             if cu_limit > 0 {
-                warn!(target: "log", "Simulation failed; setting the CU limit to the default value of {}", cu_limit);
+                warn!("Simulation failed; setting the CU limit to the default value of {}", cu_limit);
             } else {
-                warn!(target: "log", "Simulation failed; setting the CU limit to the default value");
+                warn!("Simulation failed; setting the CU limit to the default value");
             }
         };
     } else {
@@ -281,6 +292,21 @@ pub async fn send_smart_transaction(
     let transaction = VersionedTransaction::try_new(versioned_message, &signers_copy)?;
 
     elapsed_time.prepare_and_simulate = start.elapsed();
+
+    if transaction.signatures.is_empty() {
+        return Err(SignerError::NotEnoughSigners.into());
+    }
+
+    let signature = transaction.signatures[0];
+
+    if tx_config.dry_run {
+        return Ok(SmartTxResult {
+            signature,
+            priority_fee,
+            jito_bundle_id: None,
+            elapsed_time,
+        });
+    }
 
     if let Some(jito_config) = tx_config.jito {
         let serialized_transaction = bincode::serialize(&transaction).expect("Failed to serialize transaction");
@@ -312,14 +338,14 @@ pub async fn send_smart_transaction(
             elapsed_time.confirm = start.elapsed();
 
             Ok(SmartTxResult {
-                signature: Some(signature),
+                signature,
                 priority_fee,
                 jito_bundle_id: Some(jito_bundle_id),
                 elapsed_time,
             })
         } else {
             Ok(SmartTxResult {
-                signature: None,
+                signature,
                 priority_fee,
                 jito_bundle_id: Some(jito_bundle_id),
                 elapsed_time,
@@ -334,7 +360,7 @@ pub async fn send_smart_transaction(
         };
 
         // Send the transaction.
-        let signature = client.send_transaction_with_config(&transaction, send_config).await?;
+        client.send_transaction_with_config(&transaction, send_config).await?;
 
         elapsed_time.send = start.elapsed();
 
@@ -345,7 +371,7 @@ pub async fn send_smart_transaction(
         }
 
         Ok(SmartTxResult {
-            signature: Some(signature),
+            signature,
             priority_fee,
             jito_bundle_id: None,
             elapsed_time,
@@ -417,11 +443,11 @@ async fn poll_transaction_confirmation(
             {
                 return Ok(tx_sig);
             }
-            if status.err.is_some() {
-                warn!(target: "log", "Transaction {} failed with error: {}", tx_sig, status.err.clone().unwrap());
+            if let Some(err) = status.err {
+                warn!("Transaction {} failed with error: {}", tx_sig, err);
                 return Err(ClientError {
                     request: None,
-                    kind: status.err.unwrap().into(),
+                    kind: err.into(),
                 });
             }
         }

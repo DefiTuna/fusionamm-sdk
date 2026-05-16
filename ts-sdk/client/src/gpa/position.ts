@@ -8,10 +8,12 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import type { GetProgramAccountsMemcmpFilter, Account, GetProgramAccountsApi, Rpc, Address } from "@solana/kit";
-import { getBase58Decoder, getAddressEncoder, getI32Encoder } from "@solana/kit";
+import type { Account, Address, GetProgramAccountsApi, GetProgramAccountsMemcmpFilter, Rpc } from "@solana/kit";
+import { getAddressEncoder, getBase58Decoder, getI32Encoder } from "@solana/kit";
+
 import type { Position } from "../generated";
-import { POSITION_DISCRIMINATOR, getPositionDecoder, FUSIONAMM_PROGRAM_ADDRESS } from "../generated";
+import { FUSIONAMM_PROGRAM_ADDRESS, getPositionDecoder, POSITION_DISCRIMINATOR } from "../generated";
+
 import { fetchDecodedProgramAccounts } from "./utils";
 
 type PositionFilter = GetProgramAccountsMemcmpFilter & {

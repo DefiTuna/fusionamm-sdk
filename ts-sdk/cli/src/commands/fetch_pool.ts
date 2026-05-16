@@ -1,8 +1,9 @@
-import { fetchMaybeFusionPool, fetchAllFusionPoolWithFilter } from "@crypticdot/fusionamm-client";
+import { fetchAllFusionPoolWithFilter, fetchMaybeFusionPool } from "@crypticdot/fusionamm-client";
+import { sqrtPriceToPrice } from "@crypticdot/fusionamm-core";
+import { fetchAllMint } from "@solana-program/token-2022";
+
 import BaseCommand, { addressArg } from "../base";
 import { rpc } from "../rpc";
-import { fetchAllMint } from "@solana-program/token-2022";
-import { sqrtPriceToPrice } from "@crypticdot/fusionamm-core";
 
 export default class FetchPool extends BaseCommand {
   static override args = {
@@ -14,7 +15,7 @@ export default class FetchPool extends BaseCommand {
   static override examples = ["<%= config.bin %> <%= command.id %> 3qx1xPHwQopPXQPPjZDNZ4PnKpQvYeC3s8tPHcC5Ux1V"];
 
   public async run() {
-    const { args, flags } = await this.parse(FetchPool);
+    const { args } = await this.parse(FetchPool);
 
     const fusionPoolAddress = args.pool;
 
@@ -39,7 +40,7 @@ export default class FetchPool extends BaseCommand {
     } else {
       console.log("Fetching fusion pools...");
       const pools = await fetchAllFusionPoolWithFilter(rpc);
-      for (let pool of pools) {
+      for (const pool of pools) {
         console.log(pool.address);
       }
     }

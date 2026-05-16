@@ -1,17 +1,15 @@
 {
-  "extends": "../../tsconfig.json",
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
+  "extends": "@crypticdot/typescript-config/base.json",
+  "include": ["src"],
+  "exclude": ["node_modules"],
   "compilerOptions": {
-    "allowJs": false,
-    "module": "preserve",
-    "outDir": "./dist",
-    "rootDir": "src",
+    "outDir": "dist",
     "strict": true,
-    "target": "es2022"
+    "target": "ES2022",
+    "paths": {
+      "@crypticdot/fusionamm-core": ["../client/core"],
+      "@crypticdot/fusionamm-client": ["../client/src"],
+      "@crypticdot/fusionamm-sdk": ["../fusionamm-sdk/src"]
+    }
   }
 }

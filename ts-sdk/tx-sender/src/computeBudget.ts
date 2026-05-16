@@ -8,9 +8,10 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import { getSetComputeUnitPriceInstruction, getSetComputeUnitLimitInstruction } from "@solana-program/compute-budget";
-import type { IInstruction, Address, Rpc, SolanaRpcApi } from "@solana/kit";
-import { prependTransactionMessageInstruction, isWritableRole } from "@solana/kit";
+import type { Address, IInstruction, Rpc, SolanaRpcApi } from "@solana/kit";
+import { isWritableRole, prependTransactionMessageInstruction } from "@solana/kit";
+import { getSetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction } from "@solana-program/compute-budget";
+
 import type { Percentile, TransactionConfig } from "./config";
 import { DEFAULT_COMPUTE_UNIT_MARGIN_MULTIPLIER } from "./config";
 import type { TxMessage } from "./priorityFees";

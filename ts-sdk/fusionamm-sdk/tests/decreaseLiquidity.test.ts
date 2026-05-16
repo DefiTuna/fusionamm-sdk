@@ -8,17 +8,18 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import {fetchPosition, getPositionAddress} from "@crypticdot/fusionamm-client";
-import {fetchToken} from "@solana-program/token-2022";
-import type {Address} from "@solana/kit";
+import { fetchPosition, getPositionAddress } from "@crypticdot/fusionamm-client";
+import type { Address } from "@solana/kit";
+import { fetchToken } from "@solana-program/token-2022";
 import assert from "assert";
-import {beforeAll, describe, it} from "vitest";
-import {decreaseLiquidityInstructions, DEFAULT_FUNDER, setDefaultFunder} from "../src";
-import {rpc, sendTransaction, signer} from "./utils/mockRpc";
-import {setupPosition, setupFusionPool} from "./utils/program";
-import {setupAta, setupMint} from "./utils/token";
+import { beforeAll, describe, it } from "vitest";
 
-import {setupAtaTE, setupMintTE, setupMintTEFee} from "./utils/tokenExtensions";
+import { decreaseLiquidityInstructions, DEFAULT_FUNDER, setDefaultFunder } from "../src";
+
+import { rpc, sendTransaction, signer } from "./utils/mockRpc";
+import { setupFusionPool, setupPosition } from "./utils/program";
+import { setupAta, setupMint } from "./utils/token";
+import { setupAtaTE, setupMintTE, setupMintTEFee } from "./utils/tokenExtensions";
 
 const mintTypes = new Map([
   ["A", setupMint],
@@ -44,9 +45,9 @@ const poolTypes = new Map([
 ]);
 
 const positionTypes = new Map([
-  ["equally centered", {tickLower: -100, tickUpper: 100}],
-  ["one sided A", {tickLower: -100, tickUpper: -1}],
-  ["one sided B", {tickLower: 1, tickUpper: 100}],
+  ["equally centered", { tickLower: -100, tickUpper: 100 }],
+  ["one sided A", { tickLower: -100, tickUpper: -1 }],
+  ["one sided B", { tickLower: 1, tickUpper: 100 }],
 ]);
 
 describe("Decrease Liquidity", () => {
@@ -65,7 +66,7 @@ describe("Decrease Liquidity", () => {
 
     for (const [name, setup] of ataTypes) {
       const mint = mints.get(name)!;
-      atas.set(name, await setup(mint, {amount: tokenBalance}));
+      atas.set(name, await setup(mint, { amount: tokenBalance }));
     }
 
     for (const [name, setup] of poolTypes) {
@@ -93,7 +94,7 @@ describe("Decrease Liquidity", () => {
     const liquidityToDecrease = 10_000n;
     const positionMintAddress = positions.get(positionName)!;
 
-    const {quote, instructions} = await decreaseLiquidityInstructions(rpc, positionMintAddress, {
+    const { quote, instructions } = await decreaseLiquidityInstructions(rpc, positionMintAddress, {
       liquidity: liquidityToDecrease,
     });
 
@@ -129,7 +130,7 @@ describe("Decrease Liquidity", () => {
     setDefaultFunder(DEFAULT_FUNDER);
 
     await assert.rejects(
-      decreaseLiquidityInstructions(rpc, positions.get("A-B equally centered")!, {liquidity: liquidityToDecrease}),
+      decreaseLiquidityInstructions(rpc, positions.get("A-B equally centered")!, { liquidity: liquidityToDecrease }),
     );
 
     setDefaultFunder(signer);

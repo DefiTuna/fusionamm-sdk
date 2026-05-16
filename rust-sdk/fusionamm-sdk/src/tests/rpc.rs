@@ -230,6 +230,15 @@ async fn send(context: &mut ProgramTestContext, method: &str, params: &Vec<Value
                 feature_set: Some(version.feature_set),
             })?
         }
+        "getBalance" => {
+            let address_str = params[0].as_str().unwrap_or_default();
+            let address = Pubkey::from_str(address_str)?;
+            let lamports = context.banks_client.get_balance(address).await?;
+            to_value(Response {
+                context: RpcResponseContext { slot, api_version: None },
+                value: lamports,
+            })?
+        }
         _ => return Err(format!("Method not implemented: {}", method).into()),
     };
 

@@ -8,11 +8,12 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import { describe, it } from "vitest";
-import type { SysvarRent } from "@solana/sysvars";
 import { lamports } from "@solana/kit";
-import { calculateMinimumBalanceForRentExemption } from "../src/sysvar";
+import type { SysvarRent } from "@solana/sysvars";
 import assert from "assert";
+import { describe, it } from "vitest";
+
+import { calculateMinimumBalanceForRentExemption } from "../src/sysvar";
 
 describe("Sysvar", () => {
   const rent: SysvarRent = {

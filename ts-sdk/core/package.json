@@ -1,11 +1,11 @@
 {
   "name": "@crypticdot/fusionamm-core",
   "description": "FusionAMM core typescript package.",
-  "version": "1.0.76",
+  "version": "1.1.5",
+  "type": "module",
   "main": "./dist/nodejs/fusionamm_core_js_bindings.js",
   "types": "./dist/nodejs/fusionamm_core_js_bindings.d.ts",
   "browser": "./dist/browser/fusionamm_core_js_bindings.js",
-  "type": "module",
   "publishConfig": {
     "access": "public"
   },
@@ -22,15 +22,19 @@
     "test": "tsc --noEmit && vitest run tests",
     "prepublishOnly": "rimraf dist/nodejs/.gitignore dist/browser/.gitignore",
     "deploy": "../../scripts/deploy-npm",
+    "lint": "pnpm eslint && pnpm type-check",
+    "eslint": "eslint \"**/*.ts*\" --fix",
+    "type-check": "tsc -p .",
     "clean": "cargo clean && rimraf dist"
   },
   "devDependencies": {
+    "@crypticdot/typescript-config": "^1.0.0",
     "@crypticdot/eslint-config": "^1.0.0",
     "@crypticdot/prettier-config": "^1.0.0",
     "@crypticdot/fusionamm-client": "workspace:*",
     "@crypticdot/fusionamm-rust-core": "workspace:*",
     "typescript": "^5.8.3",
-    "wasm-pack": "^0.13.1"
+    "wasm-pack": "0.13.1"
   },
   "license": "SEE LICENSE IN LICENSE",
   "keywords": [

@@ -10,10 +10,12 @@
 
 import type { Account, Address, GetProgramAccountsApi, GetProgramAccountsMemcmpFilter, Rpc } from "@solana/kit";
 import { getAddressEncoder, getBase58Decoder } from "@solana/kit";
+
 import type { PositionBundle } from "../generated/accounts/positionBundle";
-import { POSITION_BUNDLE_DISCRIMINATOR, getPositionBundleDecoder } from "../generated/accounts/positionBundle";
-import { fetchDecodedProgramAccounts } from "./utils";
+import { getPositionBundleDecoder, POSITION_BUNDLE_DISCRIMINATOR } from "../generated/accounts/positionBundle";
 import { FUSIONAMM_PROGRAM_ADDRESS } from "../generated/programs/fusionamm";
+
+import { fetchDecodedProgramAccounts } from "./utils";
 
 export type PositionBundleFilter = GetProgramAccountsMemcmpFilter & {
   readonly __kind: unique symbol;

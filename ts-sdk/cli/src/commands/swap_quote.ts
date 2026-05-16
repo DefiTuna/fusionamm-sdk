@@ -1,4 +1,4 @@
-import { fetchMaybeFusionPool } from "@crypticdot/fusionamm-client";
+import { fetchMaybeFusionPool, tickArrayToFacade } from "@crypticdot/fusionamm-client";
 import {
   ExactInSwapQuote,
   ExactOutSwapQuote,
@@ -7,10 +7,11 @@ import {
   swapQuoteByOutputToken,
 } from "@crypticdot/fusionamm-core";
 import { fetchTickArrayOrDefault, SLIPPAGE_TOLERANCE_BPS } from "@crypticdot/fusionamm-sdk";
+import { Flags } from "@oclif/core";
+import { fetchMint } from "@solana-program/token-2022";
+
 import BaseCommand, { addressArg, bigintFlag } from "../base";
 import { rpc } from "../rpc";
-import { fetchMint } from "@solana-program/token-2022";
-import { Flags } from "@oclif/core";
 
 export default class SwapQuote extends BaseCommand {
   static override args = {
@@ -75,7 +76,7 @@ export default class SwapQuote extends BaseCommand {
       aToB,
       SLIPPAGE_TOLERANCE_BPS,
       fusionPool.data,
-      tickArrays.map(x => x.data),
+      tickArrays.map(x => tickArrayToFacade(x.data)),
     ] as const;
 
     const swapQuote = flags.amountIn

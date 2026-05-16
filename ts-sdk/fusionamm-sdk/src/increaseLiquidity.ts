@@ -8,28 +8,30 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import {FP_NFT_UPDATE_AUTH, FusionPool} from "@crypticdot/fusionamm-client";
 import {
   fetchAllMaybeTickArray,
-  fetchPosition,
   fetchFusionPool,
+  fetchPosition,
+  FP_NFT_UPDATE_AUTH,
+  FusionPool,
   getIncreaseLiquidityInstruction,
   getInitializeTickArrayInstruction,
   getOpenPositionInstruction,
+  getOpenPositionInstructionWithEphemeralSigner,
   getPositionAddress,
   getTickArrayAddress,
-  getTickArraySize,
+  getTickArrayMinSize,
 } from "@crypticdot/fusionamm-client";
-import type {IncreaseLiquidityQuote, TransferFee} from "@crypticdot/fusionamm-core";
+import type { IncreaseLiquidityQuote, TransferFee } from "@crypticdot/fusionamm-core";
 import {
   getFullRangeTickIndexes,
+  getInitializableTickIndex,
   getTickArrayStartTickIndex,
   increaseLiquidityQuote,
   increaseLiquidityQuoteA,
   increaseLiquidityQuoteB,
-  priceToTickIndex,
-  getInitializableTickIndex,
   orderTickIndexes,
+  priceToTickIndex,
 } from "@crypticdot/fusionamm-core";
 import type {
   Account,
@@ -43,17 +45,18 @@ import type {
   Rpc,
   TransactionSigner,
 } from "@solana/kit";
-import {address, generateKeyPairSigner, lamports} from "@solana/kit";
-import {fetchSysvarRent} from "@solana/sysvars";
-import {DEFAULT_ADDRESS, FUNDER, SLIPPAGE_TOLERANCE_BPS} from "./config";
-import {ASSOCIATED_TOKEN_PROGRAM_ADDRESS, findAssociatedTokenPda} from "@solana-program/token";
-import {getCurrentTransferFee, prepareTokenAccountsInstructions} from "./token";
-import type {Mint} from "@solana-program/token-2022";
-import {fetchAllMint, TOKEN_2022_PROGRAM_ADDRESS} from "@solana-program/token-2022";
-import {MEMO_PROGRAM_ADDRESS} from "@solana-program/memo";
+import { lamports } from "@solana/kit";
+import { fetchSysvarRent } from "@solana/sysvars";
+import { MEMO_PROGRAM_ADDRESS } from "@solana-program/memo";
+import { ASSOCIATED_TOKEN_PROGRAM_ADDRESS, findAssociatedTokenPda } from "@solana-program/token";
+import type { Mint } from "@solana-program/token-2022";
+import { fetchAllMint, TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
 import assert from "assert";
-import {calculateMinimumBalanceForRentExemption} from "./sysvar";
-import {PriceOrTickIndex} from "./types";
+
+import { DEFAULT_ADDRESS, FUNDER, SLIPPAGE_TOLERANCE_BPS } from "./config";
+import { calculateMinimumBalanceForRentExemption } from "./sysvar";
+import { getCurrentTransferFee, prepareTokenAccountsInstructions } from "./token";
+import { PriceOrTickIndex } from "./types";
 
 // TODO: allow specify number as well as bigint
 // TODO: transfer hook
@@ -65,17 +68,17 @@ import {PriceOrTickIndex} from "./types";
  */
 export type IncreaseLiquidityQuoteParam =
   | {
-  /** The amount of liquidity to increase. */
-  liquidity: bigint;
-}
+      /** The amount of liquidity to increase. */
+      liquidity: bigint;
+    }
   | {
-  /** The amount of Token A to add. */
-  tokenA: bigint;
-}
+      /** The amount of Token A to add. */
+      tokenA: bigint;
+    }
   | {
-  /** The amount of Token B to add. */
-  tokenB: bigint;
-};
+      /** The amount of Token B to add. */
+      tokenB: bigint;
+    };
 
 /**
  * Represents the instructions and quote for increasing liquidity in a position.
@@ -212,7 +215,7 @@ export async function increaseLiquidityInstructions(
     getTickArrayAddress(fusionPool.address, upperTickArrayStartIndex).then(x => x[0]),
   ]);
 
-  const {createInstructions, cleanupInstructions, tokenAccountAddresses} = await prepareTokenAccountsInstructions(
+  const { createInstructions, cleanupInstructions, tokenAccountAddresses } = await prepareTokenAccountsInstructions(
     rpc,
     authority,
     {
@@ -271,17 +274,20 @@ export type OpenPositionInstructions = IncreaseLiquidityInstructions & {
 
 async function internalOpenPositionInstructions(
   rpc: Rpc<GetAccountInfoApi & GetMultipleAccountsApi & GetMinimumBalanceForRentExemptionApi & GetEpochInfoApi>,
+  positionMint: TransactionSigner | Address,
   fusionPool: Account<FusionPool>,
   param: IncreaseLiquidityQuoteParam,
   lowerTickIndex: number,
   upperTickIndex: number,
   mintA: Account<Mint>,
   mintB: Account<Mint>,
-  slippageToleranceBps: number = SLIPPAGE_TOLERANCE_BPS,
-  funder: TransactionSigner = FUNDER,
+  slippageToleranceBps: number,
+  funder: TransactionSigner,
 ): Promise<OpenPositionInstructions> {
   assert(funder.address !== DEFAULT_ADDRESS, "Either supply a funder or set the default funder");
   const instructions: IInstruction[] = [];
+
+  const positionMintAddress = typeof positionMint === "string" ? positionMint : positionMint.address;
 
   const rent = await fetchSysvarRent(rpc);
   let nonRefundableRent: bigint = 0n;
@@ -313,23 +319,21 @@ async function internalOpenPositionInstructions(
     transferFeeB,
   );
 
-  const positionMint = await generateKeyPairSigner();
-
   const lowerTickArrayIndex = getTickArrayStartTickIndex(initializableLowerTickIndex, fusionPool.data.tickSpacing);
   const upperTickArrayIndex = getTickArrayStartTickIndex(initializableUpperTickIndex, fusionPool.data.tickSpacing);
 
   const [positionAddress, positionTokenAccount, lowerTickArrayAddress, upperTickArrayAddress] = await Promise.all([
-    getPositionAddress(positionMint.address),
+    getPositionAddress(positionMintAddress),
     findAssociatedTokenPda({
       owner: funder.address,
-      mint: positionMint.address,
+      mint: positionMintAddress,
       tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
     }).then(x => x[0]),
     getTickArrayAddress(fusionPool.address, lowerTickArrayIndex).then(x => x[0]),
     getTickArrayAddress(fusionPool.address, upperTickArrayIndex).then(x => x[0]),
   ]);
 
-  const {createInstructions, cleanupInstructions, tokenAccountAddresses} = await prepareTokenAccountsInstructions(
+  const { createInstructions, cleanupInstructions, tokenAccountAddresses } = await prepareTokenAccountsInstructions(
     rpc,
     funder,
     {
@@ -354,7 +358,7 @@ async function internalOpenPositionInstructions(
         startTickIndex: lowerTickArrayIndex,
       }),
     );
-    nonRefundableRent += calculateMinimumBalanceForRentExemption(rent, getTickArraySize());
+    nonRefundableRent += calculateMinimumBalanceForRentExemption(rent, getTickArrayMinSize());
   }
 
   if (!upperTickArray.exists && lowerTickArrayIndex !== upperTickArrayIndex) {
@@ -366,25 +370,44 @@ async function internalOpenPositionInstructions(
         startTickIndex: upperTickArrayIndex,
       }),
     );
-    nonRefundableRent += calculateMinimumBalanceForRentExemption(rent, getTickArraySize());
+    nonRefundableRent += calculateMinimumBalanceForRentExemption(rent, getTickArrayMinSize());
   }
 
-  instructions.push(
-    getOpenPositionInstruction({
-      funder,
-      owner: funder.address,
-      position: positionAddress[0],
-      positionMint,
-      positionTokenAccount,
-      fusionPool: fusionPool.address,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
-      tickLowerIndex: initializableLowerTickIndex,
-      tickUpperIndex: initializableUpperTickIndex,
-      token2022Program: TOKEN_2022_PROGRAM_ADDRESS,
-      metadataUpdateAuth: FP_NFT_UPDATE_AUTH,
-      withTokenMetadataExtension: true,
-    }),
-  );
+  if (typeof positionMint === "string") {
+    instructions.push(
+      getOpenPositionInstructionWithEphemeralSigner({
+        funder,
+        owner: funder.address,
+        position: positionAddress[0],
+        positionMint: positionMintAddress,
+        positionTokenAccount,
+        fusionPool: fusionPool.address,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
+        tickLowerIndex: initializableLowerTickIndex,
+        tickUpperIndex: initializableUpperTickIndex,
+        token2022Program: TOKEN_2022_PROGRAM_ADDRESS,
+        metadataUpdateAuth: FP_NFT_UPDATE_AUTH,
+        withTokenMetadataExtension: true,
+      }),
+    );
+  } else {
+    instructions.push(
+      getOpenPositionInstruction({
+        funder,
+        owner: funder.address,
+        position: positionAddress[0],
+        positionMint,
+        positionTokenAccount,
+        fusionPool: fusionPool.address,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
+        tickLowerIndex: initializableLowerTickIndex,
+        tickUpperIndex: initializableUpperTickIndex,
+        token2022Program: TOKEN_2022_PROGRAM_ADDRESS,
+        metadataUpdateAuth: FP_NFT_UPDATE_AUTH,
+        withTokenMetadataExtension: true,
+      }),
+    );
+  }
 
   instructions.push(
     getIncreaseLiquidityInstruction({
@@ -415,7 +438,7 @@ async function internalOpenPositionInstructions(
   return {
     instructions,
     quote,
-    positionMint: positionMint.address,
+    positionMint: positionMintAddress,
     initializationCost: lamports(nonRefundableRent),
   };
 }
@@ -423,7 +446,8 @@ async function internalOpenPositionInstructions(
 /**
  * Opens a full-range position for a pool, typically used for Splash Pools or other full-range liquidity provisioning.
  *
- * @param {SolanaRpc} rpc - The Solana RPC client.
+ * @param {Rpc<GetAccountInfoApi & GetMultipleAccountsApi & GetMinimumBalanceForRentExemptionApi & GetEpochInfoApi>} rpc - The Solana RPC client.
+ * @param {TransactionSigner | Address} positionMint - Ephemeral signer keypair of a position mint generated by generateKeyPairSigner(). In the case of a multisig transaction, it may instead be a public key retrieved via a SquadsX wallet.
  * @param {Address} poolAddress - The address of the liquidity pool.
  * @param {IncreaseLiquidityQuoteParam} param - The parameters for adding liquidity, where one of `liquidity`, `tokenA`, or `tokenB` must be specified. The SDK will compute the others.
  * @param {number} [slippageToleranceBps=SLIPPAGE_TOLERANCE_BPS] - The maximum acceptable slippage, in basis points (BPS).
@@ -452,6 +476,7 @@ async function internalOpenPositionInstructions(
  */
 export async function openFullRangePositionInstructions(
   rpc: Rpc<GetAccountInfoApi & GetMultipleAccountsApi & GetMinimumBalanceForRentExemptionApi & GetEpochInfoApi>,
+  positionMint: TransactionSigner | Address,
   poolAddress: Address,
   param: IncreaseLiquidityQuoteParam,
   slippageToleranceBps: number = SLIPPAGE_TOLERANCE_BPS,
@@ -462,6 +487,7 @@ export async function openFullRangePositionInstructions(
   const [mintA, mintB] = await fetchAllMint(rpc, [fusionPool.data.tokenMintA, fusionPool.data.tokenMintB]);
   return internalOpenPositionInstructions(
     rpc,
+    positionMint,
     fusionPool,
     param,
     tickRange.tickLowerIndex,
@@ -477,7 +503,8 @@ export async function openFullRangePositionInstructions(
  * Opens a new position in a concentrated liquidity pool within a specific price range.
  * This function allows you to provide liquidity for the specified range of prices and adjust liquidity parameters accordingly.
  *
- * @param {SolanaRpc} rpc - A Solana RPC client used to interact with the blockchain.
+ * @param {Rpc<GetAccountInfoApi & GetMultipleAccountsApi & GetMinimumBalanceForRentExemptionApi & GetEpochInfoApi>} rpc - A Solana RPC client used to interact with the blockchain.
+ * @param {TransactionSigner | Address} positionMint - Ephemeral signer keypair of a position mint generated by generateKeyPairSigner(). In the case of a multisig transaction, it may instead be a public key retrieved via a SquadsX wallet.
  * @param {Address} poolAddress - The address of the liquidity pool where the position will be opened.
  * @param {IncreaseLiquidityQuoteParam} param - The parameters for increasing liquidity, where you must choose one (`liquidity`, `tokenA`, or `tokenB`). The SDK will compute the other two.
  * @param {number} lowerPriceOrTickIndex - The lower bound of the price range for the position.
@@ -513,6 +540,7 @@ export async function openFullRangePositionInstructions(
  */
 export async function openPositionInstructions(
   rpc: Rpc<GetAccountInfoApi & GetMultipleAccountsApi & GetMinimumBalanceForRentExemptionApi & GetEpochInfoApi>,
+  positionMint: TransactionSigner | Address,
   poolAddress: Address,
   param: IncreaseLiquidityQuoteParam,
   lowerPriceOrTickIndex: PriceOrTickIndex,
@@ -530,6 +558,7 @@ export async function openPositionInstructions(
     upperPriceOrTickIndex.tickIndex ?? priceToTickIndex(upperPriceOrTickIndex.price, decimalsA, decimalsB);
   return internalOpenPositionInstructions(
     rpc,
+    positionMint,
     fusionPool,
     param,
     lowerTickIndex,

@@ -4,9 +4,10 @@ import {
   getSetProtocolFeeRateInstruction,
 } from "@crypticdot/fusionamm-client";
 import { sendTransaction } from "@crypticdot/fusionamm-tx-sender";
+import { Args } from "@oclif/core";
+
 import BaseCommand, { addressArg } from "../base";
 import { rpc, signer } from "../rpc";
-import { Args } from "@oclif/core";
 
 export default class SetProtocolFeeRate extends BaseCommand {
   static override args = {

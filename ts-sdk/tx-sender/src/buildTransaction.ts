@@ -9,26 +9,27 @@
 //
 
 import type {
-  IInstruction,
-  TransactionSigner,
   Address,
+  FullySignedTransaction,
+  IInstruction,
   Rpc,
   SolanaRpcApi,
-  FullySignedTransaction,
+  TransactionSigner,
   TransactionWithLifetime,
 } from "@solana/kit";
 import {
-  compressTransactionMessageUsingAddressLookupTables,
-  assertAccountDecoded,
   appendTransactionMessageInstructions,
+  assertAccountDecoded,
+  compressTransactionMessageUsingAddressLookupTables,
+  createNoopSigner,
   createTransactionMessage,
   pipe,
   setTransactionMessageFeePayerSigner,
   setTransactionMessageLifetimeUsingBlockhash,
   signTransactionMessageWithSigners,
-  createNoopSigner,
 } from "@solana/kit";
 import { fetchAllMaybeAddressLookupTable } from "@solana-program/address-lookup-table";
+
 import { TransactionConfig } from "./config";
 import { addPriorityInstructions } from "./priorityFees";
 

@@ -8,16 +8,18 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import {describe, it, beforeAll} from "vitest";
-import {createFusionPoolInstructions, DEFAULT_FUNDER, setDefaultFunder} from "../src";
-import {setupMint} from "./utils/token";
-import {setupMintTE, setupMintTEFee} from "./utils/tokenExtensions";
-import {rpc, sendTransaction, signer} from "./utils/mockRpc";
-import {fetchMaybeFusionPool} from "@crypticdot/fusionamm-client";
+import { fetchMaybeFusionPool } from "@crypticdot/fusionamm-client";
+import { priceToSqrtPrice } from "@crypticdot/fusionamm-core";
+import { Address } from "@solana/kit";
+import { assertAccountExists } from "@solana/kit";
 import assert from "assert";
-import {Address, airdropFactory, lamports} from "@solana/kit";
-import {assertAccountExists} from "@solana/kit";
-import {priceToSqrtPrice} from "@crypticdot/fusionamm-core";
+import { beforeAll, describe, it } from "vitest";
+
+import { createFusionPoolInstructions, DEFAULT_FUNDER, setDefaultFunder } from "../src";
+
+import { rpc, sendTransaction, signer } from "./utils/mockRpc";
+import { setupMint } from "./utils/token";
+import { setupMintTE, setupMintTEFee } from "./utils/tokenExtensions";
 
 describe("Create Pool", () => {
   let mintA: Address;
@@ -50,7 +52,7 @@ describe("Create Pool", () => {
     const feeRate = 1000;
     const sqrtPrice = priceToSqrtPrice(price, 6, 6);
 
-    const {instructions, poolAddress, initializationCost} = await createFusionPoolInstructions(
+    const { instructions, poolAddress, initializationCost } = await createFusionPoolInstructions(
       rpc,
       mintA,
       mintB,
@@ -85,7 +87,7 @@ describe("Create Pool", () => {
     const feeRate = 1000;
     const sqrtPrice = priceToSqrtPrice(price, 6, 6);
 
-    const {instructions, poolAddress, initializationCost} = await createFusionPoolInstructions(
+    const { instructions, poolAddress, initializationCost } = await createFusionPoolInstructions(
       rpc,
       mintA,
       mintTEA,
@@ -120,7 +122,7 @@ describe("Create Pool", () => {
     const feeRate = 1000;
     const sqrtPrice = priceToSqrtPrice(price, 6, 6);
 
-    const {instructions, poolAddress, initializationCost} = await createFusionPoolInstructions(
+    const { instructions, poolAddress, initializationCost } = await createFusionPoolInstructions(
       rpc,
       mintTEA,
       mintTEB,
@@ -155,7 +157,7 @@ describe("Create Pool", () => {
     const feeRate = 1000;
     const sqrtPrice = priceToSqrtPrice(price, 6, 6);
 
-    const {instructions, poolAddress, initializationCost} = await createFusionPoolInstructions(
+    const { instructions, poolAddress, initializationCost } = await createFusionPoolInstructions(
       rpc,
       mintA,
       mintTEFee,

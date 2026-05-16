@@ -1,7 +1,8 @@
-import {fetchMaybePosition, fetchAllPositionWithFilter} from "@crypticdot/fusionamm-client";
-import BaseCommand, {addressArg, addressFlag} from "../base";
-import {rpc} from "../rpc";
-import {fetchPositionsForOwner, fetchPositionsInFusionPool} from "@crypticdot/fusionamm-sdk";
+import { fetchAllPositionWithFilter, fetchMaybePosition } from "@crypticdot/fusionamm-client";
+import { fetchPositionsForOwner, fetchPositionsInFusionPool } from "@crypticdot/fusionamm-sdk";
+
+import BaseCommand, { addressArg, addressFlag } from "../base";
+import { rpc } from "../rpc";
 
 export default class FetchPosition extends BaseCommand {
   static override args = {
@@ -21,7 +22,7 @@ export default class FetchPosition extends BaseCommand {
   static override examples = ["<%= config.bin %> <%= command.id %> 3qx1xPHwQopPXQPPjZDNZ4PnKpQvYeC3s8tPHcC5Ux1V"];
 
   public async run() {
-    const {args, flags} = await this.parse(FetchPosition);
+    const { args, flags } = await this.parse(FetchPosition);
 
     const positionAddress = args.position;
 
@@ -37,24 +38,24 @@ export default class FetchPosition extends BaseCommand {
       console.log("Fetching positions...");
       if (flags.pool && flags.owner) {
         const positions = await fetchPositionsForOwner(rpc, flags.owner);
-        for (let position of positions) {
+        for (const position of positions) {
           if (!position.isPositionBundle) {
             if (position.data.fusionPool == flags.pool) console.log(position.address);
           }
         }
       } else if (flags.pool) {
         const positions = await fetchPositionsInFusionPool(rpc, flags.pool);
-        for (let position of positions) {
+        for (const position of positions) {
           if (!position.isPositionBundle) {
             if (position.data.fusionPool == flags.pool) console.log(position.address);
           }
         }
       } else if (flags.owner) {
         const positions = await fetchPositionsForOwner(rpc, flags.owner);
-        for (let position of positions) console.log(position.address);
+        for (const position of positions) console.log(position.address);
       } else {
         const positions = await fetchAllPositionWithFilter(rpc);
-        for (let position of positions) console.log(position.address);
+        for (const position of positions) console.log(position.address);
       }
     }
   }

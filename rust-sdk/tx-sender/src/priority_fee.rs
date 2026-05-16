@@ -13,6 +13,7 @@ use std::collections::HashMap;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum PriorityFeeLevel {
     None,
+    VeryLow,
     Low,
     Medium,
     High,
@@ -41,6 +42,7 @@ pub async fn get_priority_fee_estimate(client: &RpcClient, addresses: Vec<Pubkey
 pub async fn get_priority_fee_levels_estimate(client: &RpcClient, addresses: Vec<Pubkey>) -> Result<HashMap<PriorityFeeLevel, u64>, ClientError> {
     let mut priority_fees: HashMap<PriorityFeeLevel, u64> = [
         (PriorityFeeLevel::None, 0),
+        (PriorityFeeLevel::VeryLow, 0),
         (PriorityFeeLevel::Low, 0),
         (PriorityFeeLevel::Medium, 0),
         (PriorityFeeLevel::High, 0),
@@ -56,18 +58,16 @@ pub async fn get_priority_fee_levels_estimate(client: &RpcClient, addresses: Vec
     }
 
     let mut sorted_fees: Vec<_> = recent_prioritization_fees.into_iter().collect();
-    sorted_fees.sort_by(|a, b| b.slot.cmp(&a.slot));
-    let chunk_size = 150;
-    let chunks: Vec<_> = sorted_fees.chunks(chunk_size).take(3).collect();
-    let mut percentiles: HashMap<u8, u64> = HashMap::new();
-    for chunk in chunks.iter() {
-        let fees: Vec<u64> = chunk.iter().map(|fee| fee.prioritization_fee).collect();
-        percentiles = calculate_percentiles(&fees);
-    }
+    sorted_fees.sort_by_key(|b| std::cmp::Reverse(b.slot));
+    // Take last 150 slots
+    let chunk: Vec<_> = sorted_fees.iter().take(150).cloned().collect();
+    let fees: Vec<u64> = chunk.iter().map(|fee| fee.prioritization_fee).collect();
+    let percentiles = calculate_percentiles(&fees);
 
-    priority_fees.insert(PriorityFeeLevel::Low, *percentiles.get(&70).unwrap_or(&0));
-    priority_fees.insert(PriorityFeeLevel::Medium, *percentiles.get(&75).unwrap_or(&0));
-    priority_fees.insert(PriorityFeeLevel::High, *percentiles.get(&80).unwrap_or(&0));
+    priority_fees.insert(PriorityFeeLevel::VeryLow, *percentiles.get(&10).unwrap_or(&0));
+    priority_fees.insert(PriorityFeeLevel::Low, *percentiles.get(&25).unwrap_or(&0));
+    priority_fees.insert(PriorityFeeLevel::Medium, *percentiles.get(&50).unwrap_or(&0));
+    priority_fees.insert(PriorityFeeLevel::High, *percentiles.get(&75).unwrap_or(&0));
     priority_fees.insert(PriorityFeeLevel::VeryHigh, *percentiles.get(&85).unwrap_or(&0));
     priority_fees.insert(PriorityFeeLevel::Ultimate, *percentiles.get(&95).unwrap_or(&0));
 
@@ -78,7 +78,7 @@ fn calculate_percentiles(fees: &[u64]) -> HashMap<u8, u64> {
     let mut sorted_fees = fees.to_vec();
     sorted_fees.sort_unstable();
     let len = sorted_fees.len();
-    let percentiles = vec![70, 75, 80, 85, 95];
+    let percentiles = vec![10, 25, 50, 75, 85, 95];
     percentiles
         .into_iter()
         .map(|p| {

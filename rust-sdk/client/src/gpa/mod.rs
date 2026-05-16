@@ -13,19 +13,17 @@ mod fusion_pools_config;
 mod limit_order;
 mod position;
 mod position_bundle;
+mod position_lock;
 mod tick_array;
 mod token_badge;
 mod utils;
-
-// FIXME: Discriminators for accounts are not yet added to codama-rust,
-// here they are added in such a way that if they are added to codama-rust,
-// we can remove them from here.
 
 pub use fusion_pool::*;
 pub use fusion_pools_config::*;
 pub use limit_order::*;
 pub use position::*;
 pub use position_bundle::*;
+pub use position_lock::*;
 pub use tick_array::*;
 pub use token_badge::*;
 pub(crate) use utils::*;

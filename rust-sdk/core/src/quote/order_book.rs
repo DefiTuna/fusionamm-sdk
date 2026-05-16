@@ -734,6 +734,53 @@ mod order_book_tests {
         assert_eq!(order_book[3].limit_amount, 0);
     }
 
+    #[test]
+    fn test_order_book_ask_side_with_empty_tick_arrays() {
+        let mut fusion_pool = test_fusion_pool(1 << 64);
+        fusion_pool.liquidity = 10000;
+        let price_step = 0.01;
+
+        // We suppose that there is only a full range position in the pools.
+        // We don't pass lower and upper tick arrays because they aren't needed for the order book calculation.
+        let tick_sequence = TickArraySequence::empty(fusion_pool.tick_spacing);
+
+        let order_book = get_order_book_side(&fusion_pool, &tick_sequence, price_step, 8, false, 6, 6).unwrap();
+
+        assert_eq!(order_book.len(), 8);
+
+        let mut price = 1.0;
+        let mut concentrated_total = 0;
+        let mut limit_total = 0;
+        for entry in &order_book {
+            price += price_step;
+            concentrated_total += entry.concentrated_amount;
+            limit_total += entry.limit_amount;
+            assert_eq!(entry.price, price);
+            assert_eq!(entry.concentrated_total, concentrated_total);
+            assert_eq!(entry.limit_total, limit_total);
+            assert!(entry.ask_side);
+        }
+
+        // Liquidity is in token A
+        assert_eq!(order_book[0].concentrated_amount, 49);
+        assert_eq!(order_book[1].concentrated_amount, 48);
+        assert_eq!(order_book[2].concentrated_amount, 48);
+        assert_eq!(order_book[3].concentrated_amount, 47);
+        assert_eq!(order_book[4].concentrated_amount, 46);
+        assert_eq!(order_book[5].concentrated_amount, 46);
+        assert_eq!(order_book[6].concentrated_amount, 45);
+        assert_eq!(order_book[7].concentrated_amount, 44);
+
+        assert_eq!(order_book[0].concentrated_amount_quote, 49);
+        assert_eq!(order_book[1].concentrated_amount_quote, 49);
+        assert_eq!(order_book[2].concentrated_amount_quote, 49);
+        assert_eq!(order_book[3].concentrated_amount_quote, 49);
+        assert_eq!(order_book[4].concentrated_amount_quote, 48);
+        assert_eq!(order_book[5].concentrated_amount_quote, 48);
+        assert_eq!(order_book[6].concentrated_amount_quote, 48);
+        assert_eq!(order_book[7].concentrated_amount_quote, 48);
+    }
+
     /*
     fn test_large_tick_arrays_with_initialized_ticks() -> Vec<TickArrayFacade> {
         let mut tick_arrays: Vec<TickArrayFacade> = vec![];

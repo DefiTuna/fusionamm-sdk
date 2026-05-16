@@ -9,21 +9,22 @@
 //
 
 import {
-  FusionPool,
   fetchAllFusionPoolWithFilter,
+  fetchFusionPool,
+  FusionPool,
   fusionPoolTokenMintAFilter,
   getFusionPoolAddress,
-  fetchFusionPool,
 } from "@crypticdot/fusionamm-client";
 import type {
-  Rpc,
+  Account,
+  Address,
   GetAccountInfoApi,
   GetMultipleAccountsApi,
-  Address,
   GetProgramAccountsApi,
-  Account,
+  Rpc,
 } from "@solana/kit";
-import {orderMints} from "./token";
+
+import { orderMints } from "./token";
 
 /**
  * Fetches the details of a specific Concentrated Liquidity Pool.

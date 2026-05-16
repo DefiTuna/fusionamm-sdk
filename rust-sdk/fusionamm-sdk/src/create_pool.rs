@@ -8,13 +8,12 @@
 // See the LICENSE file in the project root for license information.
 //
 
-use std::collections::HashSet;
 use std::error::Error;
 
-use fusionamm_client::{get_fusion_pool_address, get_fusion_pools_config_address, get_tick_array_address, get_token_badge_address};
-use fusionamm_client::{FusionPool, TickArray};
-use fusionamm_client::{InitializePool, InitializePoolInstructionArgs, InitializeTickArray, InitializeTickArrayInstructionArgs};
-use fusionamm_core::{get_full_range_tick_indexes, get_tick_array_start_tick_index, price_to_sqrt_price, sqrt_price_to_tick_index};
+use fusionamm_client::FusionPool;
+use fusionamm_client::{get_fusion_pool_address, get_fusion_pools_config_address, get_token_badge_address};
+use fusionamm_client::{InitializePool, InitializePoolInstructionArgs};
+use fusionamm_core::price_to_sqrt_price;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_keypair::Keypair;
 use solana_program::rent::Rent;
@@ -148,8 +147,8 @@ pub async fn create_fusion_pool_instructions(
     let token_vault_a = Keypair::new();
     let token_vault_b = Keypair::new();
 
-    let mut initialization_cost: u64 = 0;
     let mut instructions = vec![];
+    let mut initialization_cost: u64 = 0;
 
     instructions.push(
         InitializePool {
@@ -179,28 +178,28 @@ pub async fn create_fusion_pool_instructions(
     initialization_cost += rent.minimum_balance(token_a_space);
     let token_b_space = get_account_data_size(token_program_b, mint_b_info)?;
     initialization_cost += rent.minimum_balance(token_b_space);
+    /*
+        let full_range = get_full_range_tick_indexes(tick_spacing);
+        let lower_tick_index = get_tick_array_start_tick_index(full_range.tick_lower_index, tick_spacing);
+        let upper_tick_index = get_tick_array_start_tick_index(full_range.tick_upper_index, tick_spacing);
+        let initial_tick_index = sqrt_price_to_tick_index(initial_sqrt_price);
+        let current_tick_index = get_tick_array_start_tick_index(initial_tick_index, tick_spacing);
 
-    let full_range = get_full_range_tick_indexes(tick_spacing);
-    let lower_tick_index = get_tick_array_start_tick_index(full_range.tick_lower_index, tick_spacing);
-    let upper_tick_index = get_tick_array_start_tick_index(full_range.tick_upper_index, tick_spacing);
-    let initial_tick_index = sqrt_price_to_tick_index(initial_sqrt_price);
-    let current_tick_index = get_tick_array_start_tick_index(initial_tick_index, tick_spacing);
-
-    let tick_array_indexes = HashSet::from([lower_tick_index, upper_tick_index, current_tick_index]);
-    for start_tick_index in tick_array_indexes {
-        let tick_array_address = get_tick_array_address(&pool_address, start_tick_index)?;
-        instructions.push(
-            InitializeTickArray {
-                fusion_pool: pool_address,
-                tick_array: tick_array_address.0,
-                funder,
-                system_program: system_program::id(),
-            }
-            .instruction(InitializeTickArrayInstructionArgs { start_tick_index }),
-        );
-        initialization_cost += rent.minimum_balance(TickArray::LEN);
-    }
-
+        let tick_array_indexes = HashSet::from([lower_tick_index, upper_tick_index, current_tick_index]);
+        for start_tick_index in tick_array_indexes {
+            let tick_array_address = get_tick_array_address(&pool_address, start_tick_index)?;
+            instructions.push(
+                InitializeTickArray {
+                    fusion_pool: pool_address,
+                    tick_array: tick_array_address.0,
+                    funder,
+                    system_program: system_program::id(),
+                }
+                .instruction(InitializeTickArrayInstructionArgs { start_tick_index }),
+            );
+            initialization_cost += rent.minimum_balance(TickArray::MIN_LEN);
+        }
+    */
     Ok(CreatePoolInstructions {
         instructions,
         initialization_cost,

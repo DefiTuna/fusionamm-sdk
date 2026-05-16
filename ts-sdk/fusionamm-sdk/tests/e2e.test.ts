@@ -8,22 +8,24 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import {describe, it, beforeAll} from "vitest";
-import {sendTransaction, rpc} from "./utils/mockRpc";
-import type {Address} from "@solana/kit";
-import {
-  createFusionPoolInstructions,
-  openFullRangePositionInstructions,
-  increaseLiquidityInstructions,
-  swapInstructions,
-  harvestPositionInstructions,
-  decreaseLiquidityInstructions,
-  closePositionInstructions,
-} from "../src";
-import {fetchToken} from "@solana-program/token";
-import {fetchPosition, fetchFusionPool, getPositionAddress} from "@crypticdot/fusionamm-client";
+import { fetchFusionPool, fetchPosition, getPositionAddress } from "@crypticdot/fusionamm-client";
+import { Address, generateKeyPairSigner } from "@solana/kit";
+import { fetchToken } from "@solana-program/token";
 import assert from "assert";
-import {setupAta, setupMint} from "./utils/token";
+import { beforeAll, describe, it } from "vitest";
+
+import {
+  closePositionInstructions,
+  createFusionPoolInstructions,
+  decreaseLiquidityInstructions,
+  harvestPositionInstructions,
+  increaseLiquidityInstructions,
+  openFullRangePositionInstructions,
+  swapInstructions,
+} from "../src";
+
+import { rpc, sendTransaction } from "./utils/mockRpc";
+import { setupAta, setupMint } from "./utils/token";
 
 describe("e2e", () => {
   let mintA: Address;
@@ -32,10 +34,10 @@ describe("e2e", () => {
   let ataB: Address;
 
   beforeAll(async () => {
-    mintA = await setupMint({decimals: 9});
-    mintB = await setupMint({decimals: 6});
-    ataA = await setupAta(mintA, {amount: 500e9});
-    ataB = await setupAta(mintB, {amount: 500e9});
+    mintA = await setupMint({ decimals: 9 });
+    mintB = await setupMint({ decimals: 6 });
+    ataA = await setupAta(mintA, { amount: 500e9 });
+    ataB = await setupAta(mintB, { amount: 500e9 });
   });
 
   const fetchPositionByMint = async (positionMint: Address) => {
@@ -44,7 +46,7 @@ describe("e2e", () => {
   };
 
   const testInitConcentratedLiquidityPool = async () => {
-    const {instructions: createPoolInstructions, poolAddress} = await createFusionPoolInstructions(
+    const { instructions: createPoolInstructions, poolAddress } = await createFusionPoolInstructions(
       rpc,
       mintA,
       mintB,
@@ -66,9 +68,14 @@ describe("e2e", () => {
     const tokenABefore = await fetchToken(rpc, ataA);
     const tokenBBefore = await fetchToken(rpc, ataB);
 
-    const {instructions, positionMint, quote} = await openFullRangePositionInstructions(rpc, poolAddress, {
-      liquidity: 1000000000n,
-    });
+    const { instructions, positionMint, quote } = await openFullRangePositionInstructions(
+      rpc,
+      await generateKeyPairSigner(),
+      poolAddress,
+      {
+        liquidity: 1000000000n,
+      },
+    );
     await sendTransaction(instructions);
 
     const positionAfter = await fetchPositionByMint(positionMint);
@@ -86,7 +93,7 @@ describe("e2e", () => {
     const tokenABefore = await fetchToken(rpc, ataA);
     const tokenBBefore = await fetchToken(rpc, ataB);
 
-    const {instructions, quote} = await increaseLiquidityInstructions(rpc, positionMint, {liquidity: 10000n});
+    const { instructions, quote } = await increaseLiquidityInstructions(rpc, positionMint, { liquidity: 10000n });
     await sendTransaction(instructions);
 
     const positionAfter = await fetchPositionByMint(positionMint);
@@ -102,7 +109,7 @@ describe("e2e", () => {
     const tokenABefore = await fetchToken(rpc, ataA);
     const tokenBBefore = await fetchToken(rpc, ataB);
 
-    const {instructions, quote} = await decreaseLiquidityInstructions(rpc, positionMint, {liquidity: 10000n});
+    const { instructions, quote } = await decreaseLiquidityInstructions(rpc, positionMint, { liquidity: 10000n });
     await sendTransaction(instructions);
 
     const positionAfter = await fetchPositionByMint(positionMint);
@@ -117,7 +124,7 @@ describe("e2e", () => {
     const tokenABefore = await fetchToken(rpc, ataA);
     const tokenBBefore = await fetchToken(rpc, ataB);
 
-    const {instructions, feesQuote} = await harvestPositionInstructions(rpc, positionMint);
+    const { instructions, feesQuote } = await harvestPositionInstructions(rpc, positionMint);
     await sendTransaction(instructions);
 
     const tokenAAfter = await fetchToken(rpc, ataA);
@@ -130,7 +137,7 @@ describe("e2e", () => {
     const tokenABefore = await fetchToken(rpc, ataA);
     const tokenBBefore = await fetchToken(rpc, ataB);
 
-    const {instructions, quote, feesQuote} = await closePositionInstructions(rpc, positionMint);
+    const { instructions, quote, feesQuote } = await closePositionInstructions(rpc, positionMint);
     await sendTransaction(instructions);
 
     const positionAfter = await rpc.getMultipleAccounts([positionMint]).send();
@@ -145,7 +152,7 @@ describe("e2e", () => {
     const tokenABefore = await fetchToken(rpc, ataA);
     const tokenBBefore = await fetchToken(rpc, ataB);
 
-    const {instructions, quote} = await swapInstructions(rpc, {inputAmount: 100000n, mint: mintA}, poolAddress);
+    const { instructions, quote } = await swapInstructions(rpc, { inputAmount: 100000n, mint: mintA }, poolAddress);
     await sendTransaction(instructions);
 
     const tokenAAfter = await fetchToken(rpc, ataA);
@@ -159,7 +166,7 @@ describe("e2e", () => {
     const tokenABefore = await fetchToken(rpc, ataA);
     const tokenBBefore = await fetchToken(rpc, ataB);
 
-    const {instructions, quote} = await swapInstructions(rpc, {outputAmount: 100000n, mint: mintA}, poolAddress);
+    const { instructions, quote } = await swapInstructions(rpc, { outputAmount: 100000n, mint: mintA }, poolAddress);
     await sendTransaction(instructions);
 
     const tokenAAfter = await fetchToken(rpc, ataA);
@@ -173,7 +180,7 @@ describe("e2e", () => {
     const tokenABefore = await fetchToken(rpc, ataA);
     const tokenBBefore = await fetchToken(rpc, ataB);
 
-    const {instructions, quote} = await swapInstructions(rpc, {inputAmount: 100n, mint: mintB}, poolAddress);
+    const { instructions, quote } = await swapInstructions(rpc, { inputAmount: 100n, mint: mintB }, poolAddress);
     await sendTransaction(instructions);
 
     const tokenAAfter = await fetchToken(rpc, ataA);
@@ -187,7 +194,7 @@ describe("e2e", () => {
     const tokenABefore = await fetchToken(rpc, ataA);
     const tokenBBefore = await fetchToken(rpc, ataB);
 
-    const {instructions, quote} = await swapInstructions(rpc, {outputAmount: 100n, mint: mintB}, poolAddress);
+    const { instructions, quote } = await swapInstructions(rpc, { outputAmount: 100n, mint: mintB }, poolAddress);
     await sendTransaction(instructions);
 
     const tokenAAfter = await fetchToken(rpc, ataA);

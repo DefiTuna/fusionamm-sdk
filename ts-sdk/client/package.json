@@ -1,6 +1,6 @@
 {
   "name": "@crypticdot/fusionamm-client",
-  "version": "1.0.76",
+  "version": "1.1.5",
   "description": "Typescript client to interact with FusionAMM on-chain program.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -25,9 +25,12 @@
     "README.md"
   ],
   "scripts": {
-    "build": "node ./codama.js && tsup src/index.ts --format cjs,esm --dts --sourcemap",
+    "build": "node ./codama.mjs && tsup src/index.ts --format cjs,esm --dts --sourcemap",
     "test": "vitest run tests",
     "deploy": "../../scripts/deploy-npm",
+    "lint": "pnpm eslint && pnpm type-check",
+    "eslint": "eslint \"**/*.ts*\" --fix",
+    "type-check": "tsc -p .",
     "clean": "rimraf dist src/generated"
   },
   "peerDependencies": {
@@ -35,12 +38,15 @@
   },
   "devDependencies": {
     "@crypticdot/fusionamm-program": "workspace:*",
+    "@crypticdot/typescript-config": "^1.0.0",
     "@crypticdot/eslint-config": "^1.0.0",
     "@crypticdot/prettier-config": "^1.0.0",
     "@codama/nodes-from-anchor": "^1.1.14",
     "@codama/renderers-js": "^1.2.14",
+    "@types/node": "22.9.0",
     "codama": "^1.2.11",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "rimraf": "^6.0.1"
   },
   "repository": {
     "type": "git",

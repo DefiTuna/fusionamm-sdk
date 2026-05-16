@@ -8,8 +8,6 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import type { Rpc, SolanaRpcApi } from "@solana/kit";
-
 /**
  * Default compute unit margin multiplier used to ensure sufficient compute budget.
  */
@@ -31,6 +29,7 @@ export const DEFAULT_TRANSACTION_CONFIG: TransactionConfig = {
   jitoBlockEngineUrl: "https://bundles.jito.wtf",
 };
 
+/*
 async function getChainIdFromGenesisHash(rpc: Rpc<SolanaRpcApi>): Promise<ChainId> {
   // not all rpc endpoints support getGenesisHash
   try {
@@ -47,6 +46,7 @@ async function getChainIdFromGenesisHash(rpc: Rpc<SolanaRpcApi>): Promise<ChainI
     return "unknown";
   }
 }
+ */
 
 type FeeSetting =
   | {

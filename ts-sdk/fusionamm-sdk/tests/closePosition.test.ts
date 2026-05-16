@@ -8,18 +8,20 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import {fetchMaybePosition, getPositionAddress} from "@crypticdot/fusionamm-client";
-import {fetchToken} from "@solana-program/token";
-import type {Address} from "@solana/kit";
-import {address} from "@solana/kit";
+import { fetchMaybePosition, getPositionAddress } from "@crypticdot/fusionamm-client";
+import type { Address } from "@solana/kit";
+import { address } from "@solana/kit";
+import { fetchToken } from "@solana-program/token";
 import assert from "assert";
-import {beforeAll, describe, it} from "vitest";
-import {closePositionInstructions} from "../src/decreaseLiquidity";
-import {swapInstructions} from "../src/swap";
-import {rpc, sendTransaction} from "./utils/mockRpc";
-import {setupPosition, setupFusionPool} from "./utils/program";
-import {setupAta, setupMint} from "./utils/token";
-import {setupAtaTE, setupMintTE, setupMintTEFee} from "./utils/tokenExtensions";
+import { beforeAll, describe, it } from "vitest";
+
+import { closePositionInstructions } from "../src/decreaseLiquidity";
+import { swapInstructions } from "../src/swap";
+
+import { rpc, sendTransaction } from "./utils/mockRpc";
+import { setupFusionPool, setupPosition } from "./utils/program";
+import { setupAta, setupMint } from "./utils/token";
+import { setupAtaTE, setupMintTE, setupMintTEFee } from "./utils/tokenExtensions";
 
 const mintTypes = new Map([
   ["A", setupMint],
@@ -45,9 +47,9 @@ const poolTypes = new Map([
 ]);
 
 const positionTypes = new Map([
-  ["equally centered", {tickLower: -100, tickUpper: 100}],
-  ["one sided A", {tickLower: -100, tickUpper: -1}],
-  ["one sided B", {tickLower: 1, tickUpper: 100}],
+  ["equally centered", { tickLower: -100, tickUpper: 100 }],
+  ["one sided A", { tickLower: -100, tickUpper: -1 }],
+  ["one sided B", { tickLower: 1, tickUpper: 100 }],
 ]);
 
 describe("Close Position", () => {
@@ -66,7 +68,7 @@ describe("Close Position", () => {
 
     for (const [name, setup] of ataTypes) {
       const mint = mints.get(name)!;
-      atas.set(name, await setup(mint, {amount: tokenBalance}));
+      atas.set(name, await setup(mint, { amount: tokenBalance }));
     }
 
     for (const [name, setup] of poolTypes) {
@@ -91,32 +93,32 @@ describe("Close Position", () => {
       const mintAAddress = mints.get(mintAName)!;
       const mintBAddress = mints.get(mintBName)!;
 
-      let {instructions: swap_instructions} = await swapInstructions(
+      let { instructions: swap_instructions } = await swapInstructions(
         rpc,
-        {inputAmount: 100n, mint: mintAAddress},
+        { inputAmount: 100n, mint: mintAAddress },
         poolAddress,
       );
       await sendTransaction(swap_instructions);
 
-      ({instructions: swap_instructions} = await swapInstructions(
+      ({ instructions: swap_instructions } = await swapInstructions(
         rpc,
-        {inputAmount: 100n, mint: mintAAddress},
+        { inputAmount: 100n, mint: mintAAddress },
         poolAddress,
       ));
       await sendTransaction(swap_instructions);
 
       // Do another swap to generate more fees
-      ({instructions: swap_instructions} = await swapInstructions(
+      ({ instructions: swap_instructions } = await swapInstructions(
         rpc,
-        {inputAmount: 100n, mint: mintBAddress},
+        { inputAmount: 100n, mint: mintBAddress },
         poolAddress,
       ));
       await sendTransaction(swap_instructions);
 
       // Do another swap to generate more fees
-      ({instructions: swap_instructions} = await swapInstructions(
+      ({ instructions: swap_instructions } = await swapInstructions(
         rpc,
-        {inputAmount: 100n, mint: mintBAddress},
+        { inputAmount: 100n, mint: mintBAddress },
         poolAddress,
       ));
       await sendTransaction(swap_instructions);
@@ -134,7 +136,7 @@ describe("Close Position", () => {
     const tokenABefore = await fetchToken(rpc, ataAAddress);
     const tokenBBefore = await fetchToken(rpc, ataBAddress);
 
-    const {instructions, quote, feesQuote} = await closePositionInstructions(rpc, positionMintAddress);
+    const { instructions, quote, feesQuote } = await closePositionInstructions(rpc, positionMintAddress);
     await sendTransaction(instructions);
 
     const positionAfter = await fetchMaybePosition(rpc, positionAddress);

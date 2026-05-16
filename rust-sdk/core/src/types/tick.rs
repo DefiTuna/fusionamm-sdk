@@ -13,10 +13,9 @@
 #[cfg(feature = "wasm")]
 use serde_big_array::BigArray;
 
+use crate::TICK_ARRAY_SIZE;
 #[cfg(feature = "wasm")]
 use fusionamm_macros::wasm_expose;
-
-use crate::TICK_ARRAY_SIZE;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "wasm", wasm_expose)]
@@ -27,6 +26,7 @@ pub struct TickRange {
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "wasm", wasm_expose)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TickFacade {
     pub initialized: bool,
     pub liquidity_net: i128,

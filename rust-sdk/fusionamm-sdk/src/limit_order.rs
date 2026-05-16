@@ -216,7 +216,7 @@ pub async fn open_limit_order_instructions(
                 start_tick_index: tick_array_start_index,
             }),
         );
-        non_refundable_rent += rent.minimum_balance(TickArray::LEN);
+        non_refundable_rent += rent.minimum_balance(TickArray::MIN_LEN);
     }
 
     let token_owner_account = token_accounts

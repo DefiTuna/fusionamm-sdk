@@ -1,5 +1,217 @@
 # @crypticdot/fusionamm-integration
 
+## 1.1.5
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.1.5
+- @crypticdot/fusionamm-client@1.1.5
+- @crypticdot/fusionamm-sdk@1.1.5
+
+## 1.1.4
+
+### Patch Changes
+
+- Updated dependencies [4423944]
+  - @crypticdot/fusionamm-client@1.1.4
+  - @crypticdot/fusionamm-core@1.1.4
+  - @crypticdot/fusionamm-sdk@1.1.4
+
+## 1.1.3
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.1.3
+- @crypticdot/fusionamm-client@1.1.3
+- @crypticdot/fusionamm-sdk@1.1.3
+
+## 1.1.2
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.1.2
+- @crypticdot/fusionamm-client@1.1.2
+- @crypticdot/fusionamm-sdk@1.1.2
+
+## 1.1.1
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.1.1
+- @crypticdot/fusionamm-client@1.1.1
+- @crypticdot/fusionamm-sdk@1.1.1
+
+## 1.1.0
+
+### Patch Changes
+
+- Updated dependencies [09dc355]
+  - @crypticdot/fusionamm-sdk@1.1.0
+  - @crypticdot/fusionamm-client@1.1.0
+  - @crypticdot/fusionamm-core@1.1.0
+
+## 1.0.83
+
+### Patch Changes
+
+- Updated dependencies [35f6c96]
+  - @crypticdot/fusionamm-sdk@1.0.83
+  - @crypticdot/fusionamm-core@1.0.83
+  - @crypticdot/fusionamm-client@1.0.83
+
+## 1.0.82
+
+### Patch Changes
+
+- Updated dependencies [9a3dd78]
+  - @crypticdot/fusionamm-sdk@1.0.82
+  - @crypticdot/fusionamm-client@1.0.82
+  - @crypticdot/fusionamm-core@1.0.82
+
+## 1.0.81
+
+### Patch Changes
+
+- Updated dependencies [6e215fc]
+  - @crypticdot/fusionamm-sdk@1.0.81
+  - @crypticdot/fusionamm-core@1.0.81
+  - @crypticdot/fusionamm-client@1.0.81
+
+## 1.0.80
+
+### Patch Changes
+
+- Updated dependencies [1efc1d5]
+  - @crypticdot/fusionamm-sdk@1.0.80
+  - @crypticdot/fusionamm-client@1.0.80
+  - @crypticdot/fusionamm-core@1.0.80
+
+## 1.0.79
+
+### Patch Changes
+
+- Updated dependencies [c0db198]
+  - @crypticdot/fusionamm-sdk@1.0.79
+  - @crypticdot/fusionamm-core@1.0.79
+  - @crypticdot/fusionamm-client@1.0.79
+
+## 1.0.78
+
+### Patch Changes
+
+- Updated dependencies [67302d3]
+  - @crypticdot/fusionamm-sdk@1.0.78
+  - @crypticdot/fusionamm-core@1.0.78
+  - @crypticdot/fusionamm-client@1.0.78
+
+## 1.0.77
+
+### Patch Changes
+
+- Updated dependencies [d835100]
+  - @crypticdot/fusionamm-sdk@1.0.77
+  - @crypticdot/fusionamm-core@1.0.77
+  - @crypticdot/fusionamm-client@1.0.77
+
+## 1.0.76
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.76
+- @crypticdot/fusionamm-client@1.0.76
+- @crypticdot/fusionamm-sdk@1.0.76
+
+## 1.0.75
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.75
+- @crypticdot/fusionamm-client@1.0.75
+- @crypticdot/fusionamm-sdk@1.0.75
+
+## 1.0.74
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.74
+- @crypticdot/fusionamm-client@1.0.74
+- @crypticdot/fusionamm-sdk@1.0.74
+
+## 1.0.73
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.73
+- @crypticdot/fusionamm-client@1.0.73
+- @crypticdot/fusionamm-sdk@1.0.73
+
+## 1.0.72
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.72
+- @crypticdot/fusionamm-client@1.0.72
+- @crypticdot/fusionamm-sdk@1.0.72
+
+## 1.0.71
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.71
+- @crypticdot/fusionamm-client@1.0.71
+- @crypticdot/fusionamm-sdk@1.0.71
+
+## 1.0.70
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.70
+- @crypticdot/fusionamm-client@1.0.70
+- @crypticdot/fusionamm-sdk@1.0.70
+
+## 1.0.69
+
+### Patch Changes
+
+- Updated dependencies [010c0ff]
+  - @crypticdot/fusionamm-core@1.0.69
+  - @crypticdot/fusionamm-sdk@1.0.69
+  - @crypticdot/fusionamm-client@1.0.69
+
+## 1.0.68
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.68
+- @crypticdot/fusionamm-client@1.0.68
+- @crypticdot/fusionamm-sdk@1.0.68
+
+## 1.0.62
+
+### Patch Changes
+
+- Updated dependencies [99f630c]
+  - @crypticdot/fusionamm-client@1.0.62
+  - @crypticdot/fusionamm-core@1.0.62
+  - @crypticdot/fusionamm-sdk@1.0.62
+
+## 1.0.61
+
+### Patch Changes
+
+- Updated dependencies [9ce4e13]
+  - @crypticdot/fusionamm-sdk@1.0.61
+  - @crypticdot/fusionamm-core@1.0.61
+  - @crypticdot/fusionamm-client@1.0.61
+
+## 1.0.60
+
+### Patch Changes
+
+- @crypticdot/fusionamm-core@1.0.60
+- @crypticdot/fusionamm-client@1.0.60
+- @crypticdot/fusionamm-sdk@1.0.60
+
 ## 1.0.59
 
 ### Patch Changes

@@ -8,16 +8,18 @@
 // See the LICENSE file in the project root for license information.
 //
 
-import {describe, it, beforeAll} from "vitest";
-import {increaseLiquidityInstructions, DEFAULT_FUNDER, setDefaultFunder} from "../src";
-import {rpc, signer, sendTransaction} from "./utils/mockRpc";
-import {setupMint, setupAta} from "./utils/token";
-import {fetchPosition, getPositionAddress} from "@crypticdot/fusionamm-client";
-import {fetchToken} from "@solana-program/token-2022";
-import type {Address} from "@solana/kit";
+import { fetchPosition, getPositionAddress } from "@crypticdot/fusionamm-client";
+import type { Address } from "@solana/kit";
+import { fetchToken } from "@solana-program/token-2022";
 import assert from "assert";
-import {setupPosition, setupFusionPool} from "./utils/program";
-import {setupAtaTE, setupMintTE, setupMintTEFee} from "./utils/tokenExtensions";
+import { beforeAll, describe, it } from "vitest";
+
+import { DEFAULT_FUNDER, increaseLiquidityInstructions, setDefaultFunder } from "../src";
+
+import { rpc, sendTransaction, signer } from "./utils/mockRpc";
+import { setupFusionPool, setupPosition } from "./utils/program";
+import { setupAta, setupMint } from "./utils/token";
+import { setupAtaTE, setupMintTE, setupMintTEFee } from "./utils/tokenExtensions";
 
 const mintTypes = new Map([
   ["A", setupMint],
@@ -43,9 +45,9 @@ const poolTypes = new Map([
 ]);
 
 const positionTypes = new Map([
-  ["equally centered", {tickLower: -100, tickUpper: 100}],
-  ["one sided A", {tickLower: -100, tickUpper: -1}],
-  ["one sided B", {tickLower: 1, tickUpper: 100}],
+  ["equally centered", { tickLower: -100, tickUpper: 100 }],
+  ["one sided A", { tickLower: -100, tickUpper: -1 }],
+  ["one sided B", { tickLower: 1, tickUpper: 100 }],
 ]);
 
 describe("Increase Liquidity Instructions", () => {
@@ -62,7 +64,7 @@ describe("Increase Liquidity Instructions", () => {
 
     for (const [name, setup] of ataTypes) {
       const mint = mints.get(name)!;
-      atas.set(name, await setup(mint, {amount: tokenBalance}));
+      atas.set(name, await setup(mint, { amount: tokenBalance }));
     }
 
     const pools: Map<string, Address> = new Map();
@@ -86,9 +88,9 @@ describe("Increase Liquidity Instructions", () => {
     const [mintAKey, mintBKey] = poolName.split("-");
     const ataA = atas.get(mintAKey)!;
     const ataB = atas.get(mintBKey)!;
-    const param = {liquidity: 10_000n};
+    const param = { liquidity: 10_000n };
 
-    const {quote, instructions} = await increaseLiquidityInstructions(rpc, positionMint, param);
+    const { quote, instructions } = await increaseLiquidityInstructions(rpc, positionMint, param);
 
     const tokenBeforeA = await fetchToken(rpc, ataA);
     const tokenBeforeB = await fetchToken(rpc, ataB);

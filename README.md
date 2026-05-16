@@ -17,7 +17,7 @@ projects.
 
 For specific use-cases you can opt for integrating with lower level packages such as:
 
-* `@crypticdot/fusionamm-client` & `fusionamm-client` - auto-generated client for the Whirlpools program that
+* `@crypticdot/fusionamm-client` & `fusionamm-client` - auto-generated client for the FusionAMM program that
   contains account, instruction and error parsing.
 * `@crypticdot/fusionamm-core` & `fusionamm-core` - utility, math and quoting functions used by other packages.
 
@@ -27,8 +27,12 @@ This monorepo contains all the code needed to build, deploy and interact with th
 
 ### Requirements
 
-- Anchor v0.31.1
-- Solana v2.1.22
+- Solana 2.3.11
+- Anchor 0.32.1
+
+```
+curl --proto '=https' --tlsv1.2 -sSfL https://solana-install.solana.workers.dev | bash
+```
 
 ### Deployment
 

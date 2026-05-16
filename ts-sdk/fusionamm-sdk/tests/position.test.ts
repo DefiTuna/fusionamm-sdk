@@ -10,10 +10,12 @@
 
 import { Address, generateKeyPairSigner } from "@solana/kit";
 import { assert, beforeAll, describe, it } from "vitest";
-import { setupAta, setupMint } from "./utils/token";
-import { setupPositionBundle, setupPosition, setupFusionPool } from "./utils/program";
+
 import { fetchPositionsForOwner, fetchPositionsInFusionPool } from "../src";
+
 import { rpc, signer } from "./utils/mockRpc";
+import { setupFusionPool, setupPosition, setupPositionBundle } from "./utils/program";
+import { setupAta, setupMint } from "./utils/token";
 
 describe("Fetch Position", () => {
   let mintA: Address;

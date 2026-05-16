@@ -14,15 +14,17 @@ import {
   getPositionAddress,
   getSetPositionRangeInstruction,
 } from "@crypticdot/fusionamm-client";
+import { Address } from "@solana/kit";
 import { findAssociatedTokenPda } from "@solana-program/token";
 import { TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
-import { Address } from "@solana/kit";
 import assert from "assert";
 import { beforeAll, describe, expect, it } from "vitest";
+
 import { decreaseLiquidityInstructions } from "../src";
+
 import { rpc, sendTransaction, signer } from "./utils/mockRpc";
+import { setupFusionPool, setupPosition } from "./utils/program";
 import { setupAta, setupMint } from "./utils/token";
-import { setupPosition, setupFusionPool } from "./utils/program";
 
 describe("Set Position Range", () => {
   let mintA: Address;

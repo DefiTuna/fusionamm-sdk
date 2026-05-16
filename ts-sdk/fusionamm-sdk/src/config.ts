@@ -9,7 +9,7 @@
 //
 
 import type { Address, TransactionSigner } from "@solana/kit";
-import { address, createNoopSigner, isAddress } from "@solana/kit";
+import { address, createNoopSigner } from "@solana/kit";
 
 /**
  * The default (null) address.

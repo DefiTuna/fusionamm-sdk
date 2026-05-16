@@ -35,15 +35,17 @@ import {
   setTransactionMessageLifetimeUsingBlockhash,
   signTransactionMessageWithSigners,
 } from "@solana/kit";
+import { getAddMemoInstruction } from "@solana-program/memo";
+import { SYSTEM_PROGRAM_ADDRESS } from "@solana-program/system";
 import assert from "assert";
+import { randomUUID } from "crypto";
 import type { ProgramTestContext } from "solana-bankrun/dist/internal";
 import { Account, startAnchor } from "solana-bankrun/dist/internal";
-import { SYSTEM_PROGRAM_ADDRESS } from "@solana-program/system";
+
 import { setDefaultFunder } from "../../src";
-import { setupConfig } from "./program";
-import { getAddMemoInstruction } from "@solana-program/memo";
-import { randomUUID } from "crypto";
+
 import { getNextKeypair } from "./keypair";
+import { setupConfig } from "./program";
 
 export const signer: KeyPairSigner = getNextKeypair();
 setDefaultFunder(signer);

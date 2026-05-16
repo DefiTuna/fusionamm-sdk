@@ -2,11 +2,12 @@ import { fetchFusionPool, fetchMaybeFusionPool } from "@crypticdot/fusionamm-cli
 import { sqrtPriceToPrice } from "@crypticdot/fusionamm-core";
 import { SLIPPAGE_TOLERANCE_BPS, swapInstructions } from "@crypticdot/fusionamm-sdk";
 import { sendTransaction } from "@crypticdot/fusionamm-tx-sender";
+import { Flags } from "@oclif/core";
+import { IInstruction } from "@solana/kit";
+import { fetchMint } from "@solana-program/token-2022";
+
 import BaseCommand, { addressArg, bigintFlag } from "../base";
 import { rpc, signer } from "../rpc";
-import { fetchMint } from "@solana-program/token-2022";
-import { IInstruction } from "@solana/kit";
-import { Flags } from "@oclif/core";
 
 export default class Swap extends BaseCommand {
   static override args = {

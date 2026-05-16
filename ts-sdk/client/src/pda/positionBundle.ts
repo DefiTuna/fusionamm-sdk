@@ -10,6 +10,7 @@
 
 import type { Address, ProgramDerivedAddress } from "@solana/kit";
 import { getAddressEncoder, getProgramDerivedAddress } from "@solana/kit";
+
 import { FUSIONAMM_PROGRAM_ADDRESS } from "../generated/programs/fusionamm";
 
 export async function getPositionBundleAddress(positionBundleMint: Address): Promise<ProgramDerivedAddress> {

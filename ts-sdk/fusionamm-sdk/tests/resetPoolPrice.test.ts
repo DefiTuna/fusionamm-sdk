@@ -12,10 +12,12 @@ import { FUSIONAMM_ERROR__RESET_PRICE_FOR_NON_EMPTY_POOL } from "@crypticdot/fus
 import { Address } from "@solana/kit";
 import assert from "assert";
 import { beforeAll, describe, expect, it } from "vitest";
-import { rpc, sendTransaction } from "./utils/mockRpc";
-import { setupAta, setupMint } from "./utils/token";
-import { setupPosition, setupFusionPool } from "./utils/program";
+
 import { resetPoolPriceInstruction } from "../src";
+
+import { rpc, sendTransaction } from "./utils/mockRpc";
+import { setupFusionPool, setupPosition } from "./utils/program";
+import { setupAta, setupMint } from "./utils/token";
 
 describe("Set Position Range", () => {
   let mintA: Address;

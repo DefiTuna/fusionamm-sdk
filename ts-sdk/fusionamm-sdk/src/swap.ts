@@ -8,9 +8,31 @@
 // See the LICENSE file in the project root for license information.
 //
 
+import {
+  FusionPool,
+  getTickArrayMinSize,
+  TICK_ARRAY_DISCRIMINATOR,
+  TickArray,
+  tickArrayToFacade,
+} from "@crypticdot/fusionamm-client";
+import {
+  AccountsType,
+  fetchAllMaybeTickArray,
+  fetchFusionPool,
+  getSwapInstruction,
+  getTickArrayAddress,
+} from "@crypticdot/fusionamm-client";
+import type { ExactInSwapQuote, ExactOutSwapQuote, TickArrayFacade, TransferFee } from "@crypticdot/fusionamm-core";
+import {
+  _TICK_ARRAY_SIZE,
+  getTickArrayStartTickIndex,
+  swapQuoteByInputToken,
+  swapQuoteByOutputToken,
+} from "@crypticdot/fusionamm-core";
 import type {
   Account,
-  Address, FetchAccountsConfig,
+  Address,
+  FetchAccountsConfig,
   GetAccountInfoApi,
   GetEpochInfoApi,
   GetMinimumBalanceForRentExemptionApi,
@@ -20,25 +42,11 @@ import type {
   TransactionSigner,
 } from "@solana/kit";
 import { AccountRole, lamports } from "@solana/kit";
-import { FUNDER, SLIPPAGE_TOLERANCE_BPS } from "./config";
-import type { ExactInSwapQuote, ExactOutSwapQuote, TickArrayFacade, TransferFee } from "@crypticdot/fusionamm-core";
-import {
-  _TICK_ARRAY_SIZE,
-  getTickArrayStartTickIndex,
-  swapQuoteByInputToken,
-  swapQuoteByOutputToken,
-} from "@crypticdot/fusionamm-core";
-import type { FusionPool } from "@crypticdot/fusionamm-client";
-import {
-  AccountsType,
-  fetchAllMaybeTickArray,
-  fetchFusionPool,
-  getSwapInstruction,
-  getTickArrayAddress,
-} from "@crypticdot/fusionamm-client";
-import { getCurrentTransferFee, prepareTokenAccountsInstructions } from "./token";
 import { MEMO_PROGRAM_ADDRESS } from "@solana-program/memo";
 import { fetchAllMint } from "@solana-program/token-2022";
+
+import { FUNDER, SLIPPAGE_TOLERANCE_BPS } from "./config";
+import { getCurrentTransferFee, prepareTokenAccountsInstructions } from "./token";
 
 // TODO: allow specify number as well as bigint
 // TODO: transfer hook
@@ -91,26 +99,19 @@ function createUninitializedTickArray(
   address: Address,
   startTickIndex: number,
   programAddress: Address,
-): Account<TickArrayFacade> {
+  fusionPool: Address,
+): Account<TickArray> {
   return {
     address,
     data: {
+      discriminator: TICK_ARRAY_DISCRIMINATOR,
       startTickIndex,
+      fusionPool,
       ticks: Array(_TICK_ARRAY_SIZE()).fill({
-        initialized: false,
-        liquidityNet: 0n,
-        liquidityGross: 0n,
-        feeGrowthOutsideA: 0n,
-        feeGrowthOutsideB: 0n,
-        age: 0n,
-        openOrdersInput: 0n,
-        partFilledOrdersInput: 0n,
-        partFilledOrdersRemainingInput: 0n,
-        fulfilledAToBOrdersInput: 0n,
-        fulfilledBToAOrdersInput: 0n,
+        __kind: "Uninitialized",
       }),
     },
-    space: 0n,
+    space: BigInt(getTickArrayMinSize()),
     executable: false,
     lamports: lamports(0n),
     programAddress,
@@ -121,7 +122,7 @@ export async function fetchTickArrayOrDefault(
   rpc: Rpc<GetMultipleAccountsApi>,
   fusionPool: Account<FusionPool>,
   config?: FetchAccountsConfig,
-): Promise<Account<TickArrayFacade>[]> {
+): Promise<Account<TickArray>[]> {
   const tickArrayStartIndex = getTickArrayStartTickIndex(fusionPool.data.tickCurrentIndex, fusionPool.data.tickSpacing);
   const offset = fusionPool.data.tickSpacing * _TICK_ARRAY_SIZE();
 
@@ -139,7 +140,7 @@ export async function fetchTickArrayOrDefault(
 
   const maybeTickArrays = await fetchAllMaybeTickArray(rpc, tickArrayAddresses, config);
 
-  const tickArrays: Account<TickArrayFacade>[] = [];
+  const tickArrays: Account<TickArray>[] = [];
 
   for (let i = 0; i < maybeTickArrays.length; i++) {
     const maybeTickArray = maybeTickArrays[i];
@@ -147,7 +148,12 @@ export async function fetchTickArrayOrDefault(
       tickArrays.push(maybeTickArray);
     } else {
       tickArrays.push(
-        createUninitializedTickArray(tickArrayAddresses[i], tickArrayIndexes[i], fusionPool.programAddress),
+        createUninitializedTickArray(
+          tickArrayAddresses[i],
+          tickArrayIndexes[i],
+          fusionPool.programAddress,
+          fusionPool.address,
+        ),
       );
     }
   }
@@ -245,7 +251,7 @@ export async function swapInstructions<T extends SwapParams>(
     fusionPool.data,
     transferFeeA,
     transferFeeB,
-    tickArrays.map(x => x.data),
+    tickArrays.map(x => tickArrayToFacade(x.data)),
     specifiedTokenA,
     slippageToleranceBps,
   );

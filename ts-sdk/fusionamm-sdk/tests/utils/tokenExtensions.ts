@@ -8,22 +8,24 @@
 // See the LICENSE file in the project root for license information.
 //
 
+import type { Address, IInstruction } from "@solana/kit";
+import { getCreateAccountInstruction } from "@solana-program/system";
 import type { ExtensionArgs } from "@solana-program/token-2022";
 import {
   findAssociatedTokenPda,
-  TOKEN_2022_PROGRAM_ADDRESS,
   getCreateAssociatedTokenIdempotentInstruction,
-  getMintToInstruction,
-  getMintSize,
   getInitializeMint2Instruction,
   getInitializeTransferFeeConfigInstruction,
+  getMintSize,
+  getMintToInstruction,
   getSetTransferFeeInstruction,
+  TOKEN_2022_PROGRAM_ADDRESS,
 } from "@solana-program/token-2022";
-import type { Address, IInstruction } from "@solana/kit";
-import { sendTransaction, signer } from "./mockRpc";
-import { getCreateAccountInstruction } from "@solana-program/system";
+
 import { DEFAULT_ADDRESS } from "../../src/config";
+
 import { getNextKeypair } from "./keypair";
+import { sendTransaction, signer } from "./mockRpc";
 
 export async function setupAtaTE(mint: Address, config: { amount?: number | bigint } = {}): Promise<Address> {
   const ata = await findAssociatedTokenPda({

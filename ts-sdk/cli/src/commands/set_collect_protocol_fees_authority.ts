@@ -4,6 +4,7 @@ import {
   getSetCollectProtocolFeesAuthorityInstruction,
 } from "@crypticdot/fusionamm-client";
 import { sendTransaction } from "@crypticdot/fusionamm-tx-sender";
+
 import BaseCommand, { addressArg } from "../base";
 import { rpc, signer } from "../rpc";
 
